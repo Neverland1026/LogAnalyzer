@@ -321,6 +321,7 @@ void MainView::restartWatch()
 
         m_parseLogThread->setFilePath(m_targetFile);
         m_parseLogThread->setKeywords(m_targetKeywords);
+        m_parseLogThread->setCaseSensitive(ui->checkBox_caseSensitive->isChecked());
         \
         m_parseLogThread->increaseRequest();
         m_parseLogThread->start();
@@ -344,7 +345,7 @@ void MainView::restartWatch()
                 LOG("Same log file located and skip.");
             }
         }
-        else
+        else if(ui->checkBox_regular->isChecked())
         {
             LOG("Prepare to query the most recently created log file.");
 

@@ -9,6 +9,7 @@ ParseLogThread::ParseLogThread(QObject *parent /*= nullptr*/)
     , m_stoped(false)
     , m_filePath("")
     , m_keywords({})
+    , m_caseSensitive(true)
     , m_lastParseIndex(0)
 {
 
@@ -69,7 +70,7 @@ void ParseLogThread::run()
                         // 去除最后的换行符
                         qstr = qstr.trimmed();
 
-                        int pos = qstr.indexOf(keyword);
+                        int pos = qstr.indexOf(keyword, 0, m_caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive);
                         if(pos >= 0)
                         {
                             emit sigParsedContent(isIncrementalParse, qstr, qstr.mid(pos));
