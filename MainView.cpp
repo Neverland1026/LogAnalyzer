@@ -54,9 +54,11 @@ void MainView::init()
         ui->lineEdit_targetDirectory->setText(settings.value("Config/DirectoryPath", QDir::tempPath()).toString());
         ui->lineEdit_targetRegExp->setText(settings.value("Config/RegExp", "").toString());
         ui->lineEdit_targetKeywords->setText(settings.value("Config/Keywords", "").toString());
-        ui->checkBox_showLineNumber->setChecked(settings.value("Config/ShowLineNumber", "").toBool());
-        ui->checkBox_showFullContent->setChecked(settings.value("Config/ShowFullContent", "").toBool());
-        ui->checkBox_clearImmediately->setChecked(settings.value("Config/ClearImmediately", "").toBool());
+        ui->checkBox_caseSensitive->setChecked(settings.value("Config/CaseSensitive", true).toBool());
+        ui->checkBox_regular->setChecked(settings.value("Config/Regular", true).toBool());
+        ui->checkBox_showLineNumber->setChecked(settings.value("Config/ShowLineNumber", false).toBool());
+        ui->checkBox_showFullContent->setChecked(settings.value("Config/ShowFullContent", false).toBool());
+        ui->checkBox_clearImmediately->setChecked(settings.value("Config/ClearImmediately", false).toBool());
     }();
 
     // 目标搜索路径
@@ -499,6 +501,8 @@ void MainView::closeEvent(QCloseEvent* event)
     settings.setValue("Config/DirectoryPath", ui->lineEdit_targetDirectory->text());
     settings.setValue("Config/RegExp", ui->lineEdit_targetRegExp->text());
     settings.setValue("Config/Keywords", ui->lineEdit_targetKeywords->text());
+    settings.setValue("Config/CaseSensitive", ui->checkBox_caseSensitive->isChecked());
+    settings.setValue("Config/Regular", ui->checkBox_regular->isChecked());
     settings.setValue("Config/ShowLineNumber", ui->checkBox_showLineNumber->isChecked());
     settings.setValue("Config/ShowFullContent", ui->checkBox_showFullContent->isChecked());
     settings.setValue("Config/ClearImmediately", ui->checkBox_clearImmediately->isChecked());

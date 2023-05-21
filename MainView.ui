@@ -267,14 +267,14 @@
         </widget>
        </item>
        <item row="2" column="2">
-        <widget class="QCheckBox" name="checkBox_showLineNumber_2">
+        <widget class="QCheckBox" name="checkBox_caseSensitive">
          <property name="text">
           <string>区分大小写</string>
          </property>
         </widget>
        </item>
        <item row="2" column="3" colspan="2">
-        <widget class="QCheckBox" name="checkBox_showLineNumber_3">
+        <widget class="QCheckBox" name="checkBox_regular">
          <property name="text">
           <string>支持正则表达</string>
          </property>
@@ -305,7 +305,7 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
