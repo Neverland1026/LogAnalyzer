@@ -334,7 +334,7 @@
             </font>
            </property>
            <property name="text">
-            <string>E:/123.log</string>
+            <string/>
            </property>
           </widget>
          </item>

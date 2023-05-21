@@ -146,27 +146,28 @@ void MainView::init()
             LOG("The located log file changed.");
             m_parseLogThread->increaseRequest();
         }
+        else
+        {
+            // 曾经存在过跟踪的文件、但是出于某种原因现在没了
+            if(m_targetFile != "" && !QFileInfo::exists(m_targetFile))
+            {
+                LOG("The located log file maybe removed, stop the parse thread.");
+
+                m_targetFile = "";
+                ui->textBrowser_parseResult->clear();
+                ui->label_targetFile->setText("");
+                if(m_parseLogThread->isRunning())
+                {
+                    m_parseLogThread->stop();
+                }
+            }
+        }
 
         lastFileSize = fi.size();
     });
     QObject::connect(m_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, [&]()
     {
         LOG("The directory changed.");
-
-        // 曾经存在过跟踪的文件、但是出于某种原因现在没了
-        if(m_targetFile != "" && !QFileInfo::exists(m_targetFile))
-        {
-            LOG("The located log file maybe removed, stop the parse thread.");
-
-            m_targetFile = "";
-            ui->textBrowser_parseResult->clear();
-            ui->label_targetFile->setText("");
-            if(m_parseLogThread->isRunning())
-            {
-                m_parseLogThread->stop();
-            }
-        }
-
         restartWatch();
     });
 
@@ -232,9 +233,6 @@ void MainView::reset()
     ui->textBrowser_parseResult->clear();
     /*ui->textBrowser_parseHistory->clear();*/
     /*ui->textBrowser_debug->clear();*/
-
-    m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
-    m_fileSystemWatcher->removePaths(m_fileSystemWatcher->directories());
 }
 
 void MainView::restartWatch()
@@ -246,9 +244,6 @@ void MainView::restartWatch()
 
     // 重置
     reset();
-
-    // 重置监视器
-    m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
 
     // 汇总用户输入的信息
     [&]()
@@ -301,6 +296,8 @@ void MainView::restartWatch()
         ui->textBrowser_parseHistory->append(QString(""));
         ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
 
+        m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
+        m_fileSystemWatcher->removePaths(m_fileSystemWatcher->directories());
         m_fileSystemWatcher->addPath(m_targetDirectory);
         m_fileSystemWatcher->addPath(m_targetFile);
 
