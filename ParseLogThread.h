@@ -39,7 +39,7 @@ signals:
     void sigParsedContent(const bool isIncrementalParse, const QString& full, const QString& part);
 
     // 解析完毕
-    void sigParseFinished();
+    void sigParseFinished(int queryLineCount);
 
     // 开始解析
     void sigStart();

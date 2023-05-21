@@ -167,6 +167,11 @@ void MainView::init()
     });
     QObject::connect(m_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, [&]()
     {
+        if(m_targetFile != "" && QFileInfo::exists(m_targetFile))
+        {
+            return;
+        }
+
         LOG("The directory changed.");
         restartWatch();
     });
@@ -190,9 +195,13 @@ void MainView::init()
         m_allParsedContent.push_back({ full, part });
         ui->textBrowser_parseHistory->append(full);
     });
-    QObject::connect(m_parseLogThread, &ParseLogThread::sigParseFinished, this, [&]()
+    QObject::connect(m_parseLogThread, &ParseLogThread::sigParseFinished, this, [&](int queryLineCount)
     {
         LOG("Parse finished.");
+        if(!m_targetFile.isEmpty())
+        {
+            ui->label_targetFile->setText(m_targetFile + "（ " + QObject::tr("已检索 %1").arg(queryLineCount) + " 行)");
+        }
         refreshParseResult();
     });
     QObject::connect(m_parseLogThread, &ParseLogThread::sigStart, this, [&]()

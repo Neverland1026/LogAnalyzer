@@ -28,6 +28,9 @@ void ParseLogThread::run()
     // 是否是增量查询结果
     bool isIncrementalParse = false;
 
+    // 已检索行数
+    int queryLineCount = 0;
+
     while(!m_stoped)
     {
         if(m_requestCount <= 0)
@@ -52,6 +55,8 @@ void ParseLogThread::run()
                 while (substr = strtok_s(s,"\n", &next))
                 {
                     s = next;
+
+                    ++queryLineCount;
 
                     QString qstr(substr);
                     if(qstr.isEmpty())
@@ -100,7 +105,7 @@ void ParseLogThread::run()
             // 关闭文件
             file.close();
 
-            emit sigParseFinished();
+            emit sigParseFinished(queryLineCount);
         }
         else
         {
