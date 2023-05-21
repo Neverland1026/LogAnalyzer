@@ -5,5 +5,7 @@
         <file>images/start.svg</file>
         <file>images/stop.svg</file>
         <file>images/logo.svg</file>
+        <file>images/topHint_active.svg</file>
+        <file>images/topHint_normal.svg</file>
     </qresource>
 </RCC>
