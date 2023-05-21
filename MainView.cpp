@@ -8,6 +8,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QMessageBox>
+#include <windows.h>
 
 MainView::MainView(QWidget *parent)
     : QDialog(parent)
@@ -105,6 +106,23 @@ void MainView::init()
         }
     });
 
+    // 置顶
+    QObject::connect(ui->pushButton_topHint, &QPushButton::clicked, this, [&]()
+    {
+        static bool topHint = false;
+        topHint = !topHint;
+        if(topHint)
+        {
+            ui->pushButton_topHint->setIcon(QIcon(":/images/topHint_active.svg"));
+            ::SetWindowPos((HWND)(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        }
+        else
+        {
+            ui->pushButton_topHint->setIcon(QIcon(":/images/topHint_normal.svg"));
+            ::SetWindowPos((HWND)(this->winId()), HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        }
+    });
+
     // 搜素结果设置
     QObject::connect(ui->checkBox_showLineNumber, &QCheckBox::clicked, this, [&]()
     {
@@ -133,11 +151,16 @@ void MainView::init()
     });
     QObject::connect(m_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, [&]()
     {
+        LOG("The directory changed.");
+
         // 曾经存在过跟踪的文件、但是出于某种原因现在没了
         if(m_targetFile != "" && !QFileInfo::exists(m_targetFile))
         {
+            LOG("The located log file maybe removed, stop the parse thread.");
+
             m_targetFile = "";
             ui->textBrowser_parseResult->clear();
+            ui->label_targetFile->setText("");
             if(m_parseLogThread->isRunning())
             {
                 m_parseLogThread->stop();
@@ -164,6 +187,7 @@ void MainView::init()
             m_allParsedContent.resize(0);
         }
         m_allParsedContent.push_back({ full, part });
+        ui->textBrowser_parseHistory->append(full);
     });
     QObject::connect(m_parseLogThread, &ParseLogThread::sigParseFinished, this, [&]()
     {
@@ -191,17 +215,6 @@ void MainView::init()
         ui->pushButton_start->setIcon(QIcon(":/images/start.svg"));
         setState(!m_parseRunning);
 
-        // 将本次的搜索记录更新到历史记录中国
-        if(ui->label_targetFile->text() != "" && m_allParsedContent.size() > 0)
-        {
-            ui->textBrowser_parseHistory->append(QString(">>> Located log file: ") + ui->label_targetFile->text());
-            for(const auto& content : m_allParsedContent)
-            {
-                ui->textBrowser_parseHistory->append(content.first);
-            }
-            ui->textBrowser_parseHistory->append(QString(""));
-        }
-
         LOG("Exit last parse process.");
         LOG(QString(50, '-'));
     });
@@ -210,27 +223,18 @@ void MainView::init()
 void MainView::reset()
 {
     ui->lineEdit_targetDirectory->setReadOnly(true);
-    ui->label_targetFile->setText(QString(""));
 
     m_targetDirectory.clear();
     m_targetRegExp.clear();
-    m_targetFile.clear();
+    /*m_targetFile.clear();*/  // 不能删除
     m_targetKeywords.clear();
     m_allParsedContent.resize(0);
     ui->textBrowser_parseResult->clear();
     /*ui->textBrowser_parseHistory->clear();*/
     /*ui->textBrowser_debug->clear();*/
 
-    QStringList files = m_fileSystemWatcher->files();
     m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
-    files = m_fileSystemWatcher->files();
-
-    if(m_parseLogThread->isRunning())
-    {
-        m_parseLogThread->stop();
-        m_parseLogThread->quit();
-        m_parseLogThread->wait();
-    }
+    m_fileSystemWatcher->removePaths(m_fileSystemWatcher->directories());
 }
 
 void MainView::restartWatch()
@@ -294,7 +298,10 @@ void MainView::restartWatch()
         // 更新新文件对象
         m_targetFile = filePath;
         ui->label_targetFile->setText(m_targetFile);
+        ui->textBrowser_parseHistory->append(QString(""));
+        ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
 
+        m_fileSystemWatcher->addPath(m_targetDirectory);
         m_fileSystemWatcher->addPath(m_targetFile);
 
         if(m_parseLogThread->isRunning())
@@ -371,6 +378,7 @@ void MainView::restartWatch()
                 if(ui->checkBox_clearImmediately->isChecked())
                 {
                     LOG("Clear parse result.");
+                    ui->label_targetFile->setText("");
                     ui->textBrowser_parseResult->clear();
                 }
             }
@@ -489,6 +497,15 @@ void MainView::closeEvent(QCloseEvent* event)
     settings.setValue("Config/ShowFullContent", ui->checkBox_showFullContent->isChecked());
     settings.setValue("Config/ClearImmediately", ui->checkBox_clearImmediately->isChecked());
     settings.sync();
+
+    reset();
+
+    if(m_parseLogThread->isRunning())
+    {
+        m_parseLogThread->stop();
+        m_parseLogThread->quit();
+        m_parseLogThread->wait();
+    }
 
     event->accept();
 }
