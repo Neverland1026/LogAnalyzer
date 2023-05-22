@@ -9,6 +9,9 @@
 #include <QCoreApplication>
 #include <QMessageBox>
 #include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <io.h>
 
 MainView::MainView(QWidget *parent)
     : QDialog(parent)
@@ -20,6 +23,7 @@ MainView::MainView(QWidget *parent)
     , m_fileSystemWatcher(new QFileSystemWatcher(this))
     , m_parseLogThread(new ParseLogThread(this))
     , m_parseRunning(false)
+    , m_timer(new QTimer())
     , m_allParsedContent({})
 {
     ui->setupUi(this);
@@ -104,6 +108,8 @@ void MainView::init()
         }
         else
         {
+            reset();
+            m_targetFile = "";
             restartWatch();
         }
     });
@@ -211,6 +217,8 @@ void MainView::init()
         ui->progressBar->setMinimum(100);
         ui->progressBar->setMaximum(0);
 
+        m_timer->start();
+
         m_parseRunning = true;
         ui->pushButton_start->setIcon(QIcon(":/images/stop.svg"));
         setState(!m_parseRunning);
@@ -223,12 +231,32 @@ void MainView::init()
         ui->progressBar->setMaximum(100);
         ui->progressBar->setValue(0);
 
+        m_timer->stop();
+
         m_parseRunning = false;
         ui->pushButton_start->setIcon(QIcon(":/images/start.svg"));
         setState(!m_parseRunning);
 
         LOG("Exit last parse process.");
         LOG(QString(50, '-'));
+    });
+
+    // m_timer
+    m_timer->setInterval(1000);
+    QObject::connect(m_timer, &QTimer::timeout, this, [&]()
+    {
+        if(m_targetFile != "" && QFileInfo::exists(m_targetFile))
+        {
+            FILE* file;
+            file = fopen(m_targetFile.toStdString().data(), "r");
+            if(file)
+            {
+                HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(file));
+                ::FlushFileBuffers(hFile);
+
+                fclose(file);
+            }
+        }
     });
 }
 

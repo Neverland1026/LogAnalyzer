@@ -5,6 +5,7 @@
 #include <QFileSystemWatcher>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QTimer>
 #include "ParseLogThread.h"
 
 QT_BEGIN_NAMESPACE
@@ -69,6 +70,9 @@ private:
 
     // 是否正在解析
     bool m_parseRunning;
+
+    // 实时将缓冲区数据写到本地
+    QTimer* m_timer;
 
     // 所有解析结果
     QVector<QPair<QString, QString>> m_allParsedContent;
