@@ -440,7 +440,7 @@ void MainView::refreshParseResult()
     ui->textBrowser_parseResult->clear();
     for(int i = 0; i < m_allParsedContent.size(); ++i)
     {
-        ui->textBrowser_parseResult->append(lineNumber(i) + " " + realContent(i));
+        ui->textBrowser_parseResult->append(lineNumber(i + 1) + " " + realContent(i));
     }
 }
 
