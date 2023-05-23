@@ -12,6 +12,8 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainView; }
 QT_END_NAMESPACE
 
+class FullScreenView;
+
 class MainView : public QDialog
 {
     Q_OBJECT
@@ -47,6 +49,11 @@ protected:
     // 窗口关闭
     void closeEvent(QCloseEvent* event) override;
 
+signals:
+
+    // 发送解析的内容
+    void sigParsedContent(const bool isIncrementalParse, const QString& full, const QString& part);
+
 private:
     Ui::MainView *ui;
 
@@ -76,6 +83,9 @@ private:
 
     // 所有解析结果
     QVector<QPair<QString, QString>> m_allParsedContent;
+
+    // 全屏窗口
+    FullScreenView* m_fullScreenView;
 
 };
 #endif // MAINVIEW_H

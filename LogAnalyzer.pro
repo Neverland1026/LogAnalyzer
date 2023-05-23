@@ -9,15 +9,18 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    FullScreenView.cpp \
     ParseLogThread.cpp \
     main.cpp \
     MainView.cpp
 
 HEADERS += \
+    FullScreenView.h \
     MainView.h \
     ParseLogThread.h
 
 FORMS += \
+    FullScreenView.ui \
     MainView.ui
 
 RC_ICONS = logo.ico

@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <io.h>
 
+#include "FullScreenView.h"
+
 MainView::MainView(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::MainView)
@@ -25,6 +27,7 @@ MainView::MainView(QWidget *parent)
     , m_parseRunning(false)
     , m_timer(new QTimer())
     , m_allParsedContent({})
+    , m_fullScreenView(new FullScreenView(this))
 {
     ui->setupUi(this);
 
@@ -196,6 +199,8 @@ void MainView::init()
     QObject::connect(m_parseLogThread, &ParseLogThread::sigParsedContent, this,
                      [&](const bool isIncrementalParse, const QString& full, const QString& part)
     {
+        emit sigParsedContent(isIncrementalParse, full, part);
+
         if(!isIncrementalParse)
         {
             m_allParsedContent.resize(0);
@@ -257,6 +262,15 @@ void MainView::init()
                 fclose(file);
             }
         }
+    });
+
+    // m_fullScreenView
+    m_fullScreenView->hide();
+    QObject::connect(this, &MainView::sigParsedContent, m_fullScreenView, &FullScreenView::slotParsedContent);
+    QObject::connect(m_fullScreenView, &FullScreenView::sigExitFullScreen, this, [&]()
+    {
+        this->show();
+        m_fullScreenView->hide();
     });
 }
 
@@ -329,6 +343,10 @@ void MainView::restartWatch()
     // 定义开始解析函数
     auto startParse = [&](const QString& filePath)
     {
+        // 界面显隐
+        this->hide();
+        m_fullScreenView->show();
+
         // 更新新文件对象
         m_targetFile = filePath;
         ui->label_targetFile->setText(m_targetFile);
@@ -544,6 +562,11 @@ void MainView::closeEvent(QCloseEvent* event)
         m_parseLogThread->stop();
         m_parseLogThread->quit();
         m_parseLogThread->wait();
+    }
+
+    if(m_timer->isActive())
+    {
+        m_timer->stop();
     }
 
     event->accept();
