@@ -23,10 +23,8 @@ public:
 
 protected:
 
-    //拖拽窗口
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
+    // 事件过滤器
+    bool eventFilter(QObject* target, QEvent* event) override;
 
     // 拦截 ESC 事件
     void keyPressEvent(QKeyEvent* event);
@@ -44,6 +42,9 @@ private:
 
     // 主窗口
     MainView* m_parentView;
+
+    // 鼠标左键按下
+    bool m_leftMousePressed;
 
     // 窗口拖拽
     bool m_bDrag;

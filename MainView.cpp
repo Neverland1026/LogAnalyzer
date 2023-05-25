@@ -31,6 +31,8 @@ MainView::MainView(QWidget *parent)
 {
     ui->setupUi(this);
 
+    m_fullScreenView->hide();
+
     init();
 
     LOG("Initial finished.");
@@ -132,6 +134,13 @@ void MainView::init()
             ui->pushButton_topHint->setIcon(QIcon(":/images/topHint_normal.svg"));
             ::SetWindowPos((HWND)(this->winId()), HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         }
+    });
+
+    // 放大
+    QObject::connect(ui->pushButton_zoom_in, &QPushButton::clicked, this, [&]()
+    {
+        this->hide();
+        m_fullScreenView->show();
     });
 
     // 搜素结果设置
@@ -265,7 +274,6 @@ void MainView::init()
     });
 
     // m_fullScreenView
-    m_fullScreenView->hide();
     QObject::connect(this, &MainView::sigParsedContent, m_fullScreenView, &FullScreenView::slotParsedContent);
     QObject::connect(m_fullScreenView, &FullScreenView::sigExitFullScreen, this, [&]()
     {

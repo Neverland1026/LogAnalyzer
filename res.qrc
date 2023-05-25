@@ -7,5 +7,7 @@
         <file>images/logo.svg</file>
         <file>images/topHint_active.svg</file>
         <file>images/topHint_normal.svg</file>
+        <file>images/zoomin.svg</file>
+        <file>images/alpha.svg</file>
     </qresource>
 </RCC>
