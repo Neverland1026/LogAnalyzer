@@ -46,6 +46,9 @@ protected:
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dropEvent(QDropEvent* event) override;
 
+    // 拦截 ESC 事件
+    void keyPressEvent(QKeyEvent* event);
+
     // 窗口关闭
     void closeEvent(QCloseEvent* event) override;
 

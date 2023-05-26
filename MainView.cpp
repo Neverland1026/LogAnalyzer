@@ -547,6 +547,17 @@ void MainView::dropEvent(QDropEvent* event)
     }
 }
 
+void MainView::keyPressEvent(QKeyEvent* event)
+{
+    switch(event->key())
+    {
+    case Qt::Key_Escape:
+        break;
+    default:
+        QWidget::keyPressEvent(event);
+    }
+}
+
 void MainView::closeEvent(QCloseEvent* event)
 {
     QSettings settings("./config.ini", QSettings::Format::IniFormat);
