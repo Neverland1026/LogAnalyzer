@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <QMenu>
 
 FullScreenView::FullScreenView(QWidget *parent)
     : QDialog(parent)
@@ -56,7 +57,34 @@ bool FullScreenView::eventFilter(QObject* target, QEvent* event)
         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
         QWheelEvent* wheelEvent = static_cast<QWheelEvent*>(event);
 
-        if(wheelEvent->modifiers() == Qt::ControlModifier && mouseEvent->type() != QEvent::MouseMove)
+        if(mouseEvent->button() == Qt::RightButton)
+        {
+            QMenu* menu = new QMenu(this);
+            QAction* tagAction = new QAction(QIcon(":/images/tag.svg"), QObject::tr("添加标记"), this);
+            QAction* clearAction = new QAction(QIcon(":/images/clear.svg"), QObject::tr("清除"), this);
+            QAction* exitAction = new QAction(QIcon(":/images/zoomout.svg"), QObject::tr("退出"), this);
+            menu->addAction(tagAction);
+            menu->addSeparator();
+            menu->addAction(clearAction);
+            menu->addSeparator();
+            menu->addAction(exitAction);
+
+            QObject::connect(tagAction, &QAction::triggered, this, [&]()
+            {
+                ui->textBrowser->append(m_splitSymbol);
+            });
+            QObject::connect(clearAction, &QAction::triggered, this, [&]()
+            {
+                ui->textBrowser->clear();
+            });
+            QObject::connect(exitAction, &QAction::triggered, this, [&]()
+            {
+                emit sigExitFullScreen();
+            });
+
+            menu->exec(cursor().pos());
+        }
+        else if(wheelEvent->modifiers() == Qt::ControlModifier && mouseEvent->type() != QEvent::MouseMove)
         {
             static const int deltaValue = 20;
             if(wheelEvent->angleDelta().y() > 0)

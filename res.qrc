@@ -9,5 +9,8 @@
         <file>images/topHint_normal.svg</file>
         <file>images/zoomin.svg</file>
         <file>images/alpha.svg</file>
+        <file>images/clear.svg</file>
+        <file>images/tag.svg</file>
+        <file>images/zoomout.svg</file>
     </qresource>
 </RCC>
