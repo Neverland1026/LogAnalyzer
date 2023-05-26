@@ -25,7 +25,7 @@ protected:
     bool eventFilter(QObject* target, QEvent* event) override;
 
     // 拦截 ESC 事件
-    void keyPressEvent(QKeyEvent* event);
+    void keyPressEvent(QKeyEvent* event) override;
 
     // 窗口关闭
     void closeEvent(QCloseEvent* event) override;

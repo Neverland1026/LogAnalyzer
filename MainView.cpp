@@ -560,34 +560,46 @@ void MainView::keyPressEvent(QKeyEvent* event)
 
 void MainView::closeEvent(QCloseEvent* event)
 {
-    QSettings settings("./config.ini", QSettings::Format::IniFormat);
-    settings.setValue("Config/WindowWidth", this->width());
-    settings.setValue("Config/WindowHeight", this->height());
-    settings.setValue("Config/WindowX", this->pos().x());
-    settings.setValue("Config/WindowY", this->pos().y());
-    settings.setValue("Config/DirectoryPath", ui->lineEdit_targetDirectory->text());
-    settings.setValue("Config/RegExp", ui->lineEdit_targetRegExp->text());
-    settings.setValue("Config/Keywords", ui->lineEdit_targetKeywords->text());
-    settings.setValue("Config/CaseSensitive", ui->checkBox_caseSensitive->isChecked());
-    settings.setValue("Config/Regular", ui->checkBox_regular->isChecked());
-    settings.setValue("Config/ShowLineNumber", ui->checkBox_showLineNumber->isChecked());
-    settings.setValue("Config/ShowFullContent", ui->checkBox_showFullContent->isChecked());
-    settings.setValue("Config/ClearImmediately", ui->checkBox_clearImmediately->isChecked());
-    settings.sync();
-
-    reset();
-
-    if(m_parseLogThread->isRunning())
+    QMessageBox::StandardButton button = QMessageBox::information(this,
+                                                                  QObject::tr("提示"),
+                                                                  QObject::tr("确定要退出吗？"),
+                                                                  QMessageBox::StandardButton::Ok,
+                                                                  QMessageBox::StandardButton::Cancel);
+    if(button == QMessageBox::StandardButton::Ok)
     {
-        m_parseLogThread->stop();
-        m_parseLogThread->quit();
-        m_parseLogThread->wait();
-    }
+        QSettings settings("./config.ini", QSettings::Format::IniFormat);
+        settings.setValue("Config/WindowWidth", this->width());
+        settings.setValue("Config/WindowHeight", this->height());
+        settings.setValue("Config/WindowX", this->pos().x());
+        settings.setValue("Config/WindowY", this->pos().y());
+        settings.setValue("Config/DirectoryPath", ui->lineEdit_targetDirectory->text());
+        settings.setValue("Config/RegExp", ui->lineEdit_targetRegExp->text());
+        settings.setValue("Config/Keywords", ui->lineEdit_targetKeywords->text());
+        settings.setValue("Config/CaseSensitive", ui->checkBox_caseSensitive->isChecked());
+        settings.setValue("Config/Regular", ui->checkBox_regular->isChecked());
+        settings.setValue("Config/ShowLineNumber", ui->checkBox_showLineNumber->isChecked());
+        settings.setValue("Config/ShowFullContent", ui->checkBox_showFullContent->isChecked());
+        settings.setValue("Config/ClearImmediately", ui->checkBox_clearImmediately->isChecked());
+        settings.sync();
 
-    if(m_timer->isActive())
+        reset();
+
+        if(m_parseLogThread->isRunning())
+        {
+            m_parseLogThread->stop();
+            m_parseLogThread->quit();
+            m_parseLogThread->wait();
+        }
+
+        if(m_timer->isActive())
+        {
+            m_timer->stop();
+        }
+
+        event->accept();
+    }
+    else
     {
-        m_timer->stop();
+        event->ignore();
     }
-
-    event->accept();
 }
