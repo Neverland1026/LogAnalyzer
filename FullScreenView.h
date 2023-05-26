@@ -8,14 +8,12 @@ namespace Ui {
 class FullScreenView;
 }
 
-class MainView;
-
 class FullScreenView : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit FullScreenView(MainView* parentView, QWidget *parent = nullptr);
+    explicit FullScreenView(QWidget *parent = nullptr);
     ~FullScreenView();
 
     // 處理解析内容
@@ -39,9 +37,6 @@ signals:
 
 private:
     Ui::FullScreenView *ui;
-
-    // 主窗口
-    MainView* m_parentView;
 
     // 鼠标左键按下
     bool m_leftMousePressed;

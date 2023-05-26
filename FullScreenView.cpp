@@ -5,12 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "MainView.h"
-
-FullScreenView::FullScreenView(MainView* parentView, QWidget *parent)
+FullScreenView::FullScreenView(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::FullScreenView)
-    , m_parentView(parentView)
     , m_leftMousePressed(false)
 {
     ui->setupUi(this);

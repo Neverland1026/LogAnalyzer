@@ -31,9 +31,10 @@ MainView::MainView(QWidget *parent)
 {
     ui->setupUi(this);
 
-    m_fullScreenView->hide();
-
     init();
+
+    m_fullScreenView->setVisible(false);
+    m_fullScreenView->hide();
 
     LOG("Initial finished.");
 }
