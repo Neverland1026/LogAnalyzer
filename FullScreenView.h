@@ -46,6 +46,9 @@ private:
     QPointF m_mouseStartPoint;
     QPointF m_windowTopLeftPoint;
 
+    // 高宽比
+    double m_ratio;
+
 };
 
 #endif // FULLSCREENVIEW_H

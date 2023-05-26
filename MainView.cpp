@@ -33,7 +33,6 @@ MainView::MainView(QWidget *parent)
 
     init();
 
-    m_fullScreenView->setVisible(false);
     m_fullScreenView->hide();
 
     LOG("Initial finished.");
@@ -50,17 +49,21 @@ void MainView::init()
 
     this->setWindowIcon(QIcon(":/images/logo.svg"));
     this->setAcceptDrops(true);
-    this->setWindowFlags(windowFlags()& Qt::WindowMinMaxButtonsHint);//去除最大化窗
+    this->setWindowFlags(windowFlags()& Qt::WindowMinMaxButtonsHint);
 
     // 读取配置文件
     [&]()
     {
         QScreen* screen = qApp->primaryScreen();
         QSettings settings("./config.ini", QSettings::Format::IniFormat);
-        this->resize(settings.value("Config/WindowWidth", 1200).toInt(),
-                     settings.value("Config/WindowHeight", 700).toInt());
+        this->resize(settings.value("Config/WindowWidth", 900).toInt(),
+                     settings.value("Config/WindowHeight", 550).toInt());
         this->move(settings.value("Config/WindowX", (screen->size().width() - this->width()) / 2).toInt(),
                    settings.value("Config/WindowY", (screen->size().height() - this->height()) / 2).toInt());
+        if((settings.value("Config/TopHint", false).toBool()))
+        {
+            ui->pushButton_topHint->animateClick();
+        }
         ui->lineEdit_targetDirectory->setText(settings.value("Config/DirectoryPath", QDir::tempPath()).toString());
         ui->lineEdit_targetRegExp->setText(settings.value("Config/RegExp", "").toString());
         ui->lineEdit_targetKeywords->setText(settings.value("Config/Keywords", "").toString());
@@ -125,6 +128,8 @@ void MainView::init()
     {
         static bool topHint = false;
         topHint = !topHint;
+        ui->pushButton_topHint->setProperty("topHint", topHint);
+
         if(topHint)
         {
             ui->pushButton_topHint->setIcon(QIcon(":/images/topHint_active.svg"));
@@ -352,10 +357,6 @@ void MainView::restartWatch()
     // 定义开始解析函数
     auto startParse = [&](const QString& filePath)
     {
-        // 界面显隐
-        this->hide();
-        m_fullScreenView->show();
-
         // 更新新文件对象
         m_targetFile = filePath;
         ui->label_targetFile->setText(m_targetFile);
@@ -580,6 +581,8 @@ void MainView::closeEvent(QCloseEvent* event)
         settings.setValue("Config/ShowLineNumber", ui->checkBox_showLineNumber->isChecked());
         settings.setValue("Config/ShowFullContent", ui->checkBox_showFullContent->isChecked());
         settings.setValue("Config/ClearImmediately", ui->checkBox_clearImmediately->isChecked());
+        settings.setValue("Config/TopHint", ui->pushButton_topHint->property("topHint").toBool());
+        ui->pushButton_topHint->clicked(settings.value("Config/TopHint", false).toBool());
         settings.sync();
 
         reset();

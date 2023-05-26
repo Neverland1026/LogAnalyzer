@@ -12,7 +12,7 @@ FullScreenView::FullScreenView(QWidget *parent)
 {
     ui->setupUi(this);
 
-    this->setWindowFlags(Qt::FramelessWindowHint);
+    this->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
     this->setAttribute(Qt::WA_TranslucentBackground);
 
     ::SetWindowPos((HWND)(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
@@ -30,6 +30,8 @@ FullScreenView::FullScreenView(QWidget *parent)
         cursor.movePosition(QTextCursor::End);
         ui->textBrowser->setTextCursor(cursor);
     });
+
+    m_ratio = (double)(this->height()) / this->width();
 }
 
 FullScreenView::~FullScreenView()
@@ -52,29 +54,48 @@ bool FullScreenView::eventFilter(QObject* target, QEvent* event)
     if(target == ui->textBrowser->viewport())
     {
         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-        if (mouseEvent->type() == QEvent::MouseButtonPress)
-        {
-            m_leftMousePressed = true;
-            m_mouseStartPoint = mouseEvent->globalPosition();
-            m_windowTopLeftPoint = this->frameGeometry().topLeft();
-        }
-        else if (mouseEvent->type() == QEvent::MouseButtonRelease)
-        {
-            m_leftMousePressed = false;
-        }
-        else if (mouseEvent->type() == QEvent::MouseMove)
-        {
-            if(m_leftMousePressed)
-            {
-                QPointF distance = mouseEvent->globalPosition() - m_mouseStartPoint;
-                QPointF newDistance = m_windowTopLeftPoint + distance;
+        QWheelEvent* wheelEvent = static_cast<QWheelEvent*>(event);
 
-                this->move(newDistance.x(), newDistance.y());
-            }
-        }
-        else if (mouseEvent->type() == QEvent::MouseButtonDblClick)
+        if(wheelEvent->modifiers() == Qt::ControlModifier && mouseEvent->type() != QEvent::MouseMove)
         {
-            emit sigExitFullScreen();
+            static const int deltaValue = 20;
+            if(wheelEvent->angleDelta().y() > 0)
+            {
+                this->resize(this->width() + deltaValue, this->height() + deltaValue * m_ratio);
+            }
+            else
+            {
+                this->resize(this->width() - deltaValue, this->height() - deltaValue * m_ratio);
+            }
+
+            return true;
+        }
+        else
+        {
+            if (mouseEvent->type() == QEvent::MouseButtonPress)
+            {
+                m_leftMousePressed = true;
+                m_mouseStartPoint = mouseEvent->globalPosition();
+                m_windowTopLeftPoint = this->frameGeometry().topLeft();
+            }
+            else if (mouseEvent->type() == QEvent::MouseButtonRelease)
+            {
+                m_leftMousePressed = false;
+            }
+            else if (mouseEvent->type() == QEvent::MouseMove)
+            {
+                if(m_leftMousePressed)
+                {
+                    QPointF distance = mouseEvent->globalPosition() - m_mouseStartPoint;
+                    QPointF newDistance = m_windowTopLeftPoint + distance;
+
+                    this->move(newDistance.x(), newDistance.y());
+                }
+            }
+            else if (mouseEvent->type() == QEvent::MouseButtonDblClick)
+            {
+                emit sigExitFullScreen();
+            }
         }
     }
 
