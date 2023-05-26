@@ -28,12 +28,14 @@ MainView::MainView(QWidget *parent)
     , m_timer(new QTimer())
     , m_allParsedContent({})
     , m_fullScreenView(new FullScreenView(this))
+    , m_splitSymbol(QString(20, '='))
 {
     ui->setupUi(this);
 
     init();
 
     m_fullScreenView->hide();
+    m_fullScreenView->setSplitSymbol(m_splitSymbol);
 
     LOG("Initial finished.");
 }
@@ -552,6 +554,13 @@ void MainView::keyPressEvent(QKeyEvent* event)
 {
     switch(event->key())
     {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+        ui->textBrowser_parseResult->append(m_splitSymbol);
+        break;
+    case Qt::Key_Delete:
+        ui->textBrowser_parseResult->clear();
+        break;
     case Qt::Key_Escape:
         break;
     default:

@@ -19,6 +19,9 @@ public:
     // 處理解析内容
     void slotParsedContent(const bool isIncrementalParse, const QString& full, const QString& part);
 
+    // 设置分隔符
+    inline void setSplitSymbol(const QString& splitSymbol) { m_splitSymbol = splitSymbol; }
+
 protected:
 
     // 事件过滤器
@@ -48,6 +51,9 @@ private:
 
     // 高宽比
     double m_ratio;
+
+    // 分割符
+    QString m_splitSymbol;
 
 };
 

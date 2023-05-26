@@ -90,5 +90,8 @@ private:
     // 全屏窗口
     FullScreenView* m_fullScreenView;
 
+    // 分割符
+    const QString m_splitSymbol;
+
 };
 #endif // MAINVIEW_H

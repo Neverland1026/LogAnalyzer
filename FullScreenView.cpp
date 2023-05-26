@@ -92,7 +92,7 @@ bool FullScreenView::eventFilter(QObject* target, QEvent* event)
                     this->move(newDistance.x(), newDistance.y());
                 }
             }
-            else if (mouseEvent->type() == QEvent::MouseButtonDblClick)
+            else if (mouseEvent->type() == QEvent::MouseButtonDblClick && mouseEvent->button() == Qt::LeftButton)
             {
                 emit sigExitFullScreen();
             }
@@ -106,6 +106,13 @@ void FullScreenView::keyPressEvent(QKeyEvent* event)
 {
     switch(event->key())
     {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+        ui->textBrowser->append(m_splitSymbol);
+        break;
+    case Qt::Key_Delete:
+        ui->textBrowser->clear();
+        break;
     case Qt::Key_Escape:
         emit sigExitFullScreen();
         break;
