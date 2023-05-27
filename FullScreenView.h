@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QCloseEvent>
+#include <QTimer>
 
 namespace Ui {
 class FullScreenView;
@@ -16,11 +17,17 @@ public:
     explicit FullScreenView(QWidget *parent = nullptr);
     ~FullScreenView();
 
-    // 處理解析内容
+    // 处理解析内容
     void slotParsedContent(const bool isIncrementalParse, const QString& full, const QString& part);
+
+    // 处理状态
+    void slotStateChanged(bool state);
 
     // 设置分隔符
     inline void setSplitSymbol(const QString& splitSymbol) { m_splitSymbol = splitSymbol; }
+
+    // 设置是否还在运行
+    inline void setRunningState(bool state) { m_running = state; }
 
 protected:
 
@@ -54,6 +61,12 @@ private:
 
     // 分割符
     QString m_splitSymbol;
+
+    // 定时器
+    QTimer* m_timer;
+
+    // 运行状态
+    bool m_running;
 
 };
 

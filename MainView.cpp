@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <io.h>
+#include <QMenu>
 
 #include "FullScreenView.h"
 
@@ -36,6 +37,8 @@ MainView::MainView(QWidget *parent)
 
     m_fullScreenView->hide();
     m_fullScreenView->setSplitSymbol(m_splitSymbol);
+
+    ui->textBrowser_parseResult->viewport()->installEventFilter(this);
 
     LOG("Initial finished.");
 }
@@ -230,7 +233,7 @@ void MainView::init()
         LOG("Parse finished.");
         if(!m_targetFile.isEmpty())
         {
-            ui->label_targetFile->setText(m_targetFile + "（ " + QObject::tr("已检索 %1").arg(queryLineCount) + " 行)");
+            ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName() + "（ " + QObject::tr("已检索 %1").arg(queryLineCount) + " 行)");
         }
         refreshParseResult();
     });
@@ -244,6 +247,7 @@ void MainView::init()
         m_parseRunning = true;
         ui->pushButton_start->setIcon(QIcon(":/images/stop.svg"));
         setState(!m_parseRunning);
+        emit sigStateChanged(m_parseRunning);
 
         LOG("Start new parse process.");
     });
@@ -258,6 +262,7 @@ void MainView::init()
         m_parseRunning = false;
         ui->pushButton_start->setIcon(QIcon(":/images/start.svg"));
         setState(!m_parseRunning);
+        emit sigStateChanged(m_parseRunning);
 
         LOG("Exit last parse process.");
         LOG(QString(50, '-'));
@@ -283,6 +288,7 @@ void MainView::init()
 
     // m_fullScreenView
     QObject::connect(this, &MainView::sigParsedContent, m_fullScreenView, &FullScreenView::slotParsedContent);
+    QObject::connect(this, &MainView::sigStateChanged, m_fullScreenView, &FullScreenView::slotStateChanged);
     QObject::connect(m_fullScreenView, &FullScreenView::sigExitFullScreen, this, [&]()
     {
         this->show();
@@ -361,7 +367,7 @@ void MainView::restartWatch()
     {
         // 更新新文件对象
         m_targetFile = filePath;
-        ui->label_targetFile->setText(m_targetFile);
+        ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName());
         ui->textBrowser_parseHistory->append(QString(""));
         ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
 
@@ -614,4 +620,35 @@ void MainView::closeEvent(QCloseEvent* event)
     {
         event->ignore();
     }
+}
+
+bool MainView::eventFilter(QObject* target, QEvent* event)
+{
+    if(target == ui->textBrowser_parseResult->viewport())
+    {
+        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+
+        if(mouseEvent->button() == Qt::RightButton)
+        {
+            QMenu* menu = new QMenu(this);
+            QAction* tagAction = new QAction(QIcon(":/images/tag.svg"), QObject::tr("添加标记"), this);
+            QAction* clearAction = new QAction(QIcon(":/images/clear.svg"), QObject::tr("清除"), this);
+            menu->addAction(tagAction);
+            menu->addSeparator();
+            menu->addAction(clearAction);
+
+            QObject::connect(tagAction, &QAction::triggered, this, [&]()
+            {
+                ui->textBrowser_parseResult->append(m_splitSymbol);
+            });
+            QObject::connect(clearAction, &QAction::triggered, this, [&]()
+            {
+                ui->textBrowser_parseResult->clear();
+            });
+
+            menu->exec(cursor().pos());
+        }
+    }
+
+    return QDialog::eventFilter(target, event);
 }

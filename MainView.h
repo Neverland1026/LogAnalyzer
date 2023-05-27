@@ -52,10 +52,16 @@ protected:
     // 窗口关闭
     void closeEvent(QCloseEvent* event) override;
 
+    // 事件过滤器
+    bool eventFilter(QObject* target, QEvent* event) override;
+
 signals:
 
     // 发送解析的内容
     void sigParsedContent(const bool isIncrementalParse, const QString& full, const QString& part);
+
+    // 发送状态改变
+    void sigStateChanged(bool running);
 
 private:
     Ui::MainView *ui;

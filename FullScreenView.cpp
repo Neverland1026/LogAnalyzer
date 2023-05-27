@@ -10,6 +10,9 @@ FullScreenView::FullScreenView(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::FullScreenView)
     , m_leftMousePressed(false)
+    , m_ratio(9.0 / 16.0)
+    , m_timer(new QTimer(this))
+    , m_running(false)
 {
     ui->setupUi(this);
 
@@ -18,12 +21,14 @@ FullScreenView::FullScreenView(QWidget *parent)
 
     ::SetWindowPos((HWND)(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
 
+    this->resize(300, 300 * m_ratio);
+
     ui->textBrowser->setReadOnly(true);
     ui->textBrowser->setTextInteractionFlags(Qt::NoTextInteraction);
-    ui->textBrowser->setStyleSheet(
-                "QTextBrowser { padding-left:5; padding-top:5; padding-bottom:5; padding-right:5 }"
-                );
+
     ui->textBrowser->viewport()->installEventFilter(this);
+
+    slotStateChanged(false);
 
     QObject::connect(ui->textBrowser, &QTextBrowser::cursorPositionChanged, this, [&]()
     {
@@ -32,7 +37,33 @@ FullScreenView::FullScreenView(QWidget *parent)
         ui->textBrowser->setTextCursor(cursor);
     });
 
-    m_ratio = (double)(this->height()) / this->width();
+    QObject::connect(m_timer, &QTimer::timeout, this, [&]()
+    {
+        static int deltaValue = 10;
+        static int value = 0;
+
+        if(value >= 250 || value <= 0)
+        {
+            deltaValue *= -1;
+        }
+        value += deltaValue;
+
+        QString styleSheet = QString(
+                    "QTextBrowser"                                \
+                    "{"                                           \
+                    "    padding-left:5;"                         \
+                    "    padding-top:5;"                          \
+                    "    padding-bottom:5;"                       \
+                    "    padding-right:5;"                        \
+                    "    background-color: rgb(238, 233, 233);"   \
+                    "    border:2px solid;"                       \
+                    "    border-color: rgba(255, 0, 0, %1);"      \
+                    "}"
+                    ).arg(QString::number(/*value*/255));
+        ui->textBrowser->setStyleSheet(styleSheet);
+    });
+    //m_timer->setInterval(10);
+    //m_timer->start();
 }
 
 FullScreenView::~FullScreenView()
@@ -47,7 +78,41 @@ void FullScreenView::slotParsedContent(const bool isIncrementalParse, const QStr
         ui->textBrowser->clear();
     }
 
-    ui->textBrowser->append(full);
+    ui->textBrowser->append(part);
+}
+
+void FullScreenView::slotStateChanged(bool state)
+{
+    QString styleSheet;
+    if(state)
+    {
+        styleSheet =
+                "QTextBrowser"                                \
+                "{"                                           \
+                "    padding-left:5;"                         \
+                "    padding-top:5;"                          \
+                "    padding-bottom:5;"                       \
+                "    padding-right:5;"                        \
+                "    background-color: rgb(238, 233, 233);"   \
+                "    border:2px solid;"                       \
+                "    border-color: rgba(255, 0, 0, 255);"     \
+                "}";
+    }
+    else
+    {
+        styleSheet =
+                "QTextBrowser"                                \
+                "{"                                           \
+                "    padding-left:5;"                         \
+                "    padding-top:5;"                          \
+                "    padding-bottom:5;"                       \
+                "    padding-right:5;"                        \
+                "    background-color: rgb(238, 233, 233);"   \
+                "    border:2px solid;"                       \
+                "    border-color: rgba(0, 0, 255, 255);"     \
+                "}";
+    }
+    ui->textBrowser->setStyleSheet(styleSheet);
 }
 
 bool FullScreenView::eventFilter(QObject* target, QEvent* event)
@@ -62,7 +127,7 @@ bool FullScreenView::eventFilter(QObject* target, QEvent* event)
             QMenu* menu = new QMenu(this);
             QAction* tagAction = new QAction(QIcon(":/images/tag.svg"), QObject::tr("添加标记"), this);
             QAction* clearAction = new QAction(QIcon(":/images/clear.svg"), QObject::tr("清除"), this);
-            QAction* exitAction = new QAction(QIcon(":/images/zoomout.svg"), QObject::tr("退出"), this);
+            QAction* exitAction = new QAction(QIcon(":/images/zoomout.svg"), QObject::tr("回到主界面"), this);
             menu->addAction(tagAction);
             menu->addSeparator();
             menu->addAction(clearAction);
@@ -86,14 +151,21 @@ bool FullScreenView::eventFilter(QObject* target, QEvent* event)
         }
         else if(wheelEvent->modifiers() == Qt::ControlModifier && mouseEvent->type() != QEvent::MouseMove)
         {
-            static const int deltaValue = 20;
-            if(wheelEvent->angleDelta().y() > 0)
+            static const int widthMinimum = this->width();
+            static const int heightMinimum = this->height();
+
+            static int deltaValue = 20;
+            static int width = this->width();
+            static int height = this->height();
+
+            deltaValue = std::fabs(deltaValue) * ((wheelEvent->angleDelta().y() > 0) ? 1 : -1);
+
+            width += deltaValue;
+            height = width * m_ratio;
+
+            if(width >= widthMinimum && height >= heightMinimum)
             {
-                this->resize(this->width() + deltaValue, this->height() + deltaValue * m_ratio);
-            }
-            else
-            {
-                this->resize(this->width() - deltaValue, this->height() - deltaValue * m_ratio);
+                this->resize(width, height);
             }
 
             return true;
