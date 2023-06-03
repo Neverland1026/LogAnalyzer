@@ -26,6 +26,9 @@ FullScreenView::FullScreenView(QWidget *parent)
     ui->textBrowser->setReadOnly(true);
     ui->textBrowser->setTextInteractionFlags(Qt::NoTextInteraction);
 
+    ui->textBrowser->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->textBrowser->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     ui->textBrowser->viewport()->installEventFilter(this);
 
     slotStateChanged(false);
