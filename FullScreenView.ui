@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>日志分析</string>
+   <string>日志监视</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
