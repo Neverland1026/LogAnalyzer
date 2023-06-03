@@ -93,7 +93,7 @@ void FullScreenView::slotStateChanged(bool state)
                 "    padding-top:5;"                          \
                 "    padding-bottom:5;"                       \
                 "    padding-right:5;"                        \
-                "    background-color: rgb(238, 233, 233);"   \
+                "    background-color: rgb(255, 255, 255);"   \
                 "    border:2px solid;"                       \
                 "    border-color: rgba(255, 0, 0, 255);"     \
                 "}";
@@ -107,7 +107,7 @@ void FullScreenView::slotStateChanged(bool state)
                 "    padding-top:5;"                          \
                 "    padding-bottom:5;"                       \
                 "    padding-right:5;"                        \
-                "    background-color: rgb(238, 233, 233);"   \
+                "    background-color: rgb(255, 255, 255);"   \
                 "    border:2px solid;"                       \
                 "    border-color: rgba(0, 0, 255, 255);"     \
                 "}";
@@ -125,22 +125,22 @@ bool FullScreenView::eventFilter(QObject* target, QEvent* event)
         if(mouseEvent->button() == Qt::RightButton)
         {
             QMenu* menu = new QMenu(this);
-            QAction* tagAction = new QAction(QIcon(":/images/tag.svg"), QObject::tr("添加标记"), this);
             QAction* clearAction = new QAction(QIcon(":/images/clear.svg"), QObject::tr("清除"), this);
+            QAction* tagAction = new QAction(QIcon(":/images/tag.svg"), QObject::tr("添加标记"), this);
             QAction* exitAction = new QAction(QIcon(":/images/zoomout.svg"), QObject::tr("回到主界面"), this);
-            menu->addAction(tagAction);
-            menu->addSeparator();
             menu->addAction(clearAction);
+            menu->addSeparator();
+            menu->addAction(tagAction);
             menu->addSeparator();
             menu->addAction(exitAction);
 
-            QObject::connect(tagAction, &QAction::triggered, this, [&]()
-            {
-                ui->textBrowser->append(m_splitSymbol);
-            });
             QObject::connect(clearAction, &QAction::triggered, this, [&]()
             {
                 ui->textBrowser->clear();
+            });
+            QObject::connect(tagAction, &QAction::triggered, this, [&]()
+            {
+                ui->textBrowser->append(m_splitSymbol);
             });
             QObject::connect(exitAction, &QAction::triggered, this, [&]()
             {

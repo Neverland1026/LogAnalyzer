@@ -164,6 +164,14 @@ void MainView::init()
         refreshParseResult();
     });
 
+    //
+    QObject::connect(ui->textBrowser_parseResult, &QTextBrowser::cursorPositionChanged, this, [&]()
+    {
+        QTextCursor cursor =  ui->textBrowser_parseResult->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        ui->textBrowser_parseResult->setTextCursor(cursor);
+    });
+
     // 文件监视器
     QObject::connect(m_fileSystemWatcher, &QFileSystemWatcher::fileChanged, this, [&]()
     {
@@ -631,19 +639,20 @@ bool MainView::eventFilter(QObject* target, QEvent* event)
         if(mouseEvent->button() == Qt::RightButton)
         {
             QMenu* menu = new QMenu(this);
-            QAction* tagAction = new QAction(QIcon(":/images/tag.svg"), QObject::tr("添加标记"), this);
             QAction* clearAction = new QAction(QIcon(":/images/clear.svg"), QObject::tr("清除"), this);
-            menu->addAction(tagAction);
-            menu->addSeparator();
+            QAction* tagAction = new QAction(QIcon(":/images/tag.svg"), QObject::tr("添加标记"), this);
             menu->addAction(clearAction);
+            menu->addSeparator();
+            menu->addAction(tagAction);
 
+            QObject::connect(clearAction, &QAction::triggered, this, [&]()
+            {
+                m_allParsedContent.resize(0);
+                ui->textBrowser_parseResult->clear();
+            });
             QObject::connect(tagAction, &QAction::triggered, this, [&]()
             {
                 ui->textBrowser_parseResult->append(m_splitSymbol);
-            });
-            QObject::connect(clearAction, &QAction::triggered, this, [&]()
-            {
-                ui->textBrowser_parseResult->clear();
             });
 
             menu->exec(cursor().pos());

@@ -26,7 +26,7 @@ void ParseLogThread::run()
 
     m_stoped = false;
 
-    // 是否是增量查询结果
+    // 增量查询结果标记位
     bool isIncrementalParse = false;
 
     // 已检索行数
@@ -50,10 +50,11 @@ void ParseLogThread::run()
                 m_lastParseIndex = file.size();
 
                 // 按 '\n' 分割解析日志
-                char* s = _strdup((char*)fPtr);
+                char* b = _strdup((char*)fPtr);
+                char* s = b;
                 char* substr;
                 char* next = NULL;
-                while (substr = strtok_s(s,"\n", &next))
+                while (substr = strtok_s(s, "\n", &next))
                 {
                     s = next;
 
@@ -86,12 +87,12 @@ void ParseLogThread::run()
                     }
                 }
 
-                if(s)
-                {
-                    /*free(s);*/  // 存在内存泄露
-                }
-
                 file.unmap(fPtr);
+
+                if(b)
+                {
+                    free(b);
+                }
             }
             else
             {
@@ -106,6 +107,7 @@ void ParseLogThread::run()
             // 关闭文件
             file.close();
 
+            // 本次解析完成
             emit sigParseFinished(queryLineCount);
         }
         else
@@ -122,6 +124,7 @@ void ParseLogThread::run()
         --m_requestCount;
     }
 
+    // 还原变量
     m_requestCount = 0;
     m_lastParseIndex = 0;
 
