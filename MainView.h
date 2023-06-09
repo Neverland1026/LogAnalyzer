@@ -99,5 +99,8 @@ private:
     // 分割符
     const QString m_splitSymbol;
 
+    // 虚拟文件路径
+    const QString m_virtualFilePath;
+
 };
 #endif // MAINVIEW_H

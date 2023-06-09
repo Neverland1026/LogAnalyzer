@@ -42,12 +42,13 @@ FullScreenView::FullScreenView(QWidget *parent)
 
     QObject::connect(m_timer, &QTimer::timeout, this, [&]()
     {
-        static int deltaValue = 10;
-        static int value = 0;
+        static const int unit_value = 10;
+        static int deltaValue = unit_value;
+        static int value = unit_value * 2;
 
-        if(value >= 250 || value <= 0)
+        if(value >= 250 - unit_value || value <= unit_value)
         {
-            deltaValue *= -1;
+            deltaValue = deltaValue * (-1);
         }
         value += deltaValue;
 
@@ -58,15 +59,14 @@ FullScreenView::FullScreenView(QWidget *parent)
                     "    padding-top:5;"                          \
                     "    padding-bottom:5;"                       \
                     "    padding-right:5;"                        \
-                    "    background-color: rgb(238, 233, 233);"   \
-                    "    border:2px solid;"                       \
+                    "    background-color: rgb(255, 255, 255);"   \
+                    "    border:3px solid;"                       \
                     "    border-color: rgba(255, 0, 0, %1);"      \
                     "}"
-                    ).arg(QString::number(/*value*/255));
+                    ).arg(QString::number(value));
         ui->textBrowser->setStyleSheet(styleSheet);
     });
-    //m_timer->setInterval(10);
-    //m_timer->start();
+    m_timer->setInterval(50);
 }
 
 FullScreenView::~FullScreenView()
@@ -86,36 +86,29 @@ void FullScreenView::slotParsedContent(const bool isIncrementalParse, const QStr
 
 void FullScreenView::slotStateChanged(bool state)
 {
-    QString styleSheet;
     if(state)
     {
-        styleSheet =
-                "QTextBrowser"                                \
-                "{"                                           \
-                "    padding-left:5;"                         \
-                "    padding-top:5;"                          \
-                "    padding-bottom:5;"                       \
-                "    padding-right:5;"                        \
-                "    background-color: rgb(255, 255, 255);"   \
-                "    border:2px solid;"                       \
-                "    border-color: rgba(255, 0, 0, 255);"     \
-                "}";
+        m_timer->start();
     }
     else
     {
+        m_timer->stop();
+
+        QString styleSheet;
         styleSheet =
-                "QTextBrowser"                                \
-                "{"                                           \
-                "    padding-left:5;"                         \
-                "    padding-top:5;"                          \
-                "    padding-bottom:5;"                       \
-                "    padding-right:5;"                        \
-                "    background-color: rgb(255, 255, 255);"   \
-                "    border:2px solid;"                       \
-                "    border-color: rgba(0, 0, 255, 255);"     \
+                "QTextBrowser"                                    \
+                "{"                                               \
+                "    padding-left:5;"                             \
+                "    padding-top:5;"                              \
+                "    padding-bottom:5;"                           \
+                "    padding-right:5;"                            \
+                "    background-color: rgb(255, 255, 255);"       \
+                "    border:3px solid;"                           \
+                "    border-color: rgba(0, 0, 255, 255);"         \
                 "}";
+
+        ui->textBrowser->setStyleSheet(styleSheet);
     }
-    ui->textBrowser->setStyleSheet(styleSheet);
 }
 
 bool FullScreenView::eventFilter(QObject* target, QEvent* event)

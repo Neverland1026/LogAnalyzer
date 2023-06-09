@@ -30,6 +30,7 @@ MainView::MainView(QWidget *parent)
     , m_allParsedContent({})
     , m_fullScreenView(new FullScreenView(this))
     , m_splitSymbol(QString(20, '='))
+    , m_virtualFilePath("./__virtual__.log")
 {
     ui->setupUi(this);
 
@@ -147,7 +148,7 @@ void MainView::init()
         }
     });
 
-    // 放大
+    // 迷你窗口
     QObject::connect(ui->pushButton_zoom_in, &QPushButton::clicked, this, [&]()
     {
         this->hide();
@@ -358,7 +359,7 @@ void MainView::restartWatch()
         LOG("TargetRegExp is empty.");
         QMessageBox::information(this,
                                  QObject::tr("提示"),
-                                 QObject::tr("查询文件名或前缀异常！"));
+                                 QObject::tr("查询表达式异常！"));
         return;
     }
     if(m_targetKeywords.isEmpty())
@@ -456,12 +457,14 @@ void MainView::restartWatch()
             }
             else
             {
-                if(ui->checkBox_clearImmediately->isChecked())
+                // 传入一个虚拟文件
+                QFile file(m_virtualFilePath);
+                if(false == file.exists())
                 {
-                    LOG("Clear parse result.");
-                    ui->label_targetFile->setText("");
-                    ui->textBrowser_parseResult->clear();
+                    file.open(QIODevice::ReadWrite | QIODevice::Text);
                 }
+
+                startParse(m_virtualFilePath);
             }
         }
     }();

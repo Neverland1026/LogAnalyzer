@@ -20,7 +20,7 @@ public:
     // 处理解析内容
     void slotParsedContent(const bool isIncrementalParse, const QString& full, const QString& part);
 
-    // 处理状态
+    // 处理是否正在解析
     void slotStateChanged(bool state);
 
     // 设置分隔符
