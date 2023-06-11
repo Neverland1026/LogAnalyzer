@@ -300,8 +300,8 @@ void MainView::init()
     QObject::connect(this, &MainView::sigStateChanged, m_fullScreenView, &FullScreenView::slotStateChanged);
     QObject::connect(m_fullScreenView, &FullScreenView::sigExitFullScreen, this, [&]()
     {
-        this->show();
         m_fullScreenView->hide();
+        this->show();
     });
 }
 
@@ -457,14 +457,22 @@ void MainView::restartWatch()
             }
             else
             {
-                // 传入一个虚拟文件
-                QFile file(m_virtualFilePath);
-                if(false == file.exists())
-                {
-                    file.open(QIODevice::ReadWrite | QIODevice::Text);
-                }
+                static std::once_flag s_flag;
+                std::call_once(s_flag, [&]() {
+                    // 传入一个虚拟文件
+                    QFile file(m_virtualFilePath);
+                    if(false == file.exists())
+                    {
+                        file.open(QIODevice::ReadWrite | QIODevice::Text);
+                    }
 
-                startParse(m_virtualFilePath);
+                    startParse(m_virtualFilePath);
+
+                    QTimer::singleShot(200, this, [&]() {
+                        QFile::remove(m_virtualFilePath);
+                        ui->pushButton_topHint->animateClick();
+                    });
+                });
             }
         }
     }();

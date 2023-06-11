@@ -19,8 +19,6 @@ FullScreenView::FullScreenView(QWidget *parent)
     this->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
     this->setAttribute(Qt::WA_TranslucentBackground);
 
-    ::SetWindowPos((HWND)(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-
     this->resize(300, 300 * m_ratio);
 
     ui->textBrowser->setReadOnly(true);
@@ -67,6 +65,10 @@ FullScreenView::FullScreenView(QWidget *parent)
         ui->textBrowser->setStyleSheet(styleSheet);
     });
     m_timer->setInterval(50);
+
+    QTimer::singleShot(0, this, [&]() {
+        ::SetWindowPos((HWND)(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+    });
 }
 
 FullScreenView::~FullScreenView()
