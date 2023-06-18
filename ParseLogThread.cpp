@@ -36,6 +36,7 @@ void ParseLogThread::run()
     {
         if(m_requestCount <= 0)
         {
+            QThread::msleep(10);
             continue;
         }
 

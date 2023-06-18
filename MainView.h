@@ -42,6 +42,12 @@ protected:
     // 日志
     void LOG(const QString& log);
 
+    // 警告提示
+    void topWarning(const QString& info);
+
+    // 询问提示
+    bool topQuestion(const QString& info);
+
     // 文件拖拽
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dropEvent(QDropEvent* event) override;

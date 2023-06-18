@@ -178,11 +178,11 @@ void MainView::init()
         static std::mutex s_mutex;
         std::lock_guard<std::mutex> lock(s_mutex);
 
-        static size_t lastFileSize = 0;
+        static size_t s_lastFileSize = 0;
         QFileInfo fi(m_targetFile);
-        if(fi.size() > lastFileSize)
+        if(fi.size() > s_lastFileSize)
         {
-            LOG("The located log file changed.");
+            LOG("The located log file's content changed.");
             m_parseLogThread->increaseRequest();
         }
         else
@@ -190,15 +190,16 @@ void MainView::init()
             // 曾经存在过跟踪的文件、但是出于某种原因现在没了
             if(m_targetFile != "" && !QFileInfo::exists(m_targetFile))
             {
-                LOG("The located log file maybe removed, stop the parse thread.");
+                LOG("The located log file maybe removed.");
 
+                s_lastFileSize = 0;
                 m_targetFile = "";
                 ui->textBrowser_parseResult->clear();
                 ui->label_targetFile->setText("");
             }
         }
 
-        lastFileSize = fi.size();
+        s_lastFileSize = fi.size();
     });
     QObject::connect(m_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, [&]()
     {
@@ -229,12 +230,12 @@ void MainView::init()
         {
             m_allParsedContent.resize(0);
         }
+
         m_allParsedContent.push_back({ full, part });
         ui->textBrowser_parseHistory->append(full);
     });
     QObject::connect(m_parseLogThread, &ParseLogThread::sigParseFinished, this, [&](int queryLineCount)
     {
-        LOG("Parse finished.");
         if(!m_targetFile.isEmpty())
         {
             ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName() + "（ " + QObject::tr("已检索 %1").arg(queryLineCount) + " 行)");
@@ -252,7 +253,7 @@ void MainView::init()
         ui->pushButton_start->setIcon(QIcon(":/images/stop.svg"));
         setUIEnabled(!m_parseRunning);
 
-        LOG("Start new parse process.");
+        LOG("Parse process begin.");
     });
     QObject::connect(m_parseLogThread, &ParseLogThread::sigStop, this, [&]()
     {
@@ -267,7 +268,7 @@ void MainView::init()
         setUIEnabled(!m_parseRunning);
         emit sigStateChanged(false);
 
-        LOG("Exit last parse process.");
+        LOG("Parse process end.");
     });
 
     // m_timer
@@ -317,8 +318,6 @@ void MainView::restartWatch()
     static std::mutex s_mutex;
     std::lock_guard<std::mutex> lock(s_mutex);
 
-    LOG("Restart watch begin.");
-
     // 重置
     reset();
 
@@ -341,27 +340,15 @@ void MainView::restartWatch()
     // 判断输入有效性
     if(m_targetDirectory.isEmpty() || !QDir(m_targetDirectory).exists())
     {
-        LOG("[" + m_targetDirectory + "] is not exist.");
-        QMessageBox::information(this,
-                                 QObject::tr("提示"),
-                                 QObject::tr("查询路径异常！"));
-        return;
+        return topWarning(QObject::tr("查询路径异常！"));
     }
     if(m_targetRegExp.isEmpty())
     {
-        LOG("TargetRegExp is empty.");
-        QMessageBox::information(this,
-                                 QObject::tr("提示"),
-                                 QObject::tr("查询表达式异常！"));
-        return;
+        return topWarning(QObject::tr("查询表达式异常！"));
     }
     if(m_targetKeywords.isEmpty())
     {
-        LOG("TargetKeywords is empty or invalid.");
-        QMessageBox::information(this,
-                                 QObject::tr("提示"),
-                                 QObject::tr("查询关键字异常！"));
-        return;
+        return topWarning(QObject::tr("查询关键字异常！"));
     }
 
     // 定义开始解析函数
@@ -449,10 +436,15 @@ void MainView::restartWatch()
                     LOG("Same log file located and skip.");
                 }
             }
+            else
+            {
+                LOG("Parse virtual empty log.");
+
+                m_targetFile = "";
+                startParse(m_targetFile);
+            }
         }
     }();
-
-    LOG("Restart watch end.");
 }
 
 void MainView::refreshParseResult()
@@ -516,6 +508,22 @@ void MainView::LOG(const QString& log)
     ui->textBrowser_debug->append(">>> " + QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzzzzz") + "    " + log);
 }
 
+void MainView::topWarning(const QString& info)
+{
+    QMessageBox messageBox(QMessageBox::Question, QObject::tr("提示"), info, QMessageBox::Yes, this);
+    messageBox.button(QMessageBox::Yes)->setText(QObject::tr("确定"));
+    messageBox.exec();
+}
+
+bool MainView::topQuestion(const QString& info)
+{
+    QMessageBox messageBox(QMessageBox::Question, QObject::tr("提示"), info, QMessageBox::Yes | QMessageBox::No, this);
+    messageBox.button(QMessageBox::Yes)->setText(QObject::tr("确定"));
+    messageBox.button(QMessageBox::No)->setText(QObject::tr("取消"));
+
+    return (messageBox.exec() == QMessageBox::Yes);
+}
+
 void MainView::dragEnterEvent(QDragEnterEvent* event)
 {
     if (event->mimeData()->hasUrls())
@@ -570,12 +578,7 @@ void MainView::keyPressEvent(QKeyEvent* event)
 
 void MainView::closeEvent(QCloseEvent* event)
 {
-    QMessageBox::StandardButton button = QMessageBox::information(this,
-                                                                  QObject::tr("提示"),
-                                                                  QObject::tr("确定要退出吗？"),
-                                                                  QMessageBox::StandardButton::Ok,
-                                                                  QMessageBox::StandardButton::Cancel);
-    if(button == QMessageBox::StandardButton::Ok)
+    if(topQuestion(QObject::tr("确定要退出吗？")))
     {
         QSettings settings("./config.ini", QSettings::Format::IniFormat);
         settings.setValue("Config/WindowWidth", this->width());

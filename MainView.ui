@@ -446,6 +446,12 @@
              <bold>true</bold>
             </font>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    background: &quot;#FFFAF0&quot;;
+    color: &quot;#000000&quot;;
+}</string>
+           </property>
            <property name="text">
             <string>已定位文件：</string>
            </property>
@@ -458,6 +464,12 @@
              <pointsize>12</pointsize>
              <bold>true</bold>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    background: &quot;#FFFAF0&quot;;
+    color: &quot;#000000&quot;;
+}</string>
            </property>
            <property name="text">
             <string/>
