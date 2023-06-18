@@ -29,8 +29,7 @@ MainView::MainView(QWidget *parent)
     , m_timer(new QTimer())
     , m_allParsedContent({})
     , m_fullScreenView(new FullScreenView(this))
-    , m_splitSymbol(QString(20, '='))
-    , m_virtualFilePath("./__virtual__.log")
+    , m_splitSymbol(QString("<font color=\"red\">%1</font>").arg(QString(30, '*')))
 {
     ui->setupUi(this);
 
@@ -196,10 +195,6 @@ void MainView::init()
                 m_targetFile = "";
                 ui->textBrowser_parseResult->clear();
                 ui->label_targetFile->setText("");
-                if(m_parseLogThread->isRunning())
-                {
-                    m_parseLogThread->stop();
-                }
             }
         }
 
@@ -255,8 +250,7 @@ void MainView::init()
 
         m_parseRunning = true;
         ui->pushButton_start->setIcon(QIcon(":/images/stop.svg"));
-        setState(!m_parseRunning);
-        emit sigStateChanged(m_parseRunning);
+        setUIEnabled(!m_parseRunning);
 
         LOG("Start new parse process.");
     });
@@ -270,11 +264,10 @@ void MainView::init()
 
         m_parseRunning = false;
         ui->pushButton_start->setIcon(QIcon(":/images/start.svg"));
-        setState(!m_parseRunning);
-        emit sigStateChanged(m_parseRunning);
+        setUIEnabled(!m_parseRunning);
+        emit sigStateChanged(false);
 
         LOG("Exit last parse process.");
-        LOG(QString(50, '-'));
     });
 
     // m_timer
@@ -376,6 +369,7 @@ void MainView::restartWatch()
     {
         // 更新新文件对象
         m_targetFile = filePath;
+
         ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName());
         ui->textBrowser_parseHistory->append(QString(""));
         ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
@@ -455,25 +449,6 @@ void MainView::restartWatch()
                     LOG("Same log file located and skip.");
                 }
             }
-            else
-            {
-                static std::once_flag s_flag;
-                std::call_once(s_flag, [&]() {
-                    // 传入一个虚拟文件
-                    QFile file(m_virtualFilePath);
-                    if(false == file.exists())
-                    {
-                        file.open(QIODevice::ReadWrite | QIODevice::Text);
-                    }
-
-                    startParse(m_virtualFilePath);
-
-                    QTimer::singleShot(200, this, [&]() {
-                        QFile::remove(m_virtualFilePath);
-                        ui->pushButton_topHint->animateClick();
-                    });
-                });
-            }
         }
     }();
 
@@ -527,7 +502,7 @@ void MainView::refreshParseResult()
     }
 }
 
-void MainView::setState(bool enabled)
+void MainView::setUIEnabled(bool enabled)
 {
     ui->lineEdit_targetDirectory->setEnabled(enabled);
     ui->pushButton_targetDirectory->setEnabled(enabled);

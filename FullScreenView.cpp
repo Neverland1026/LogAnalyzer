@@ -84,13 +84,17 @@ void FullScreenView::slotParsedContent(const bool isIncrementalParse, const QStr
     }
 
     ui->textBrowser->append(part);
+    slotStateChanged(true);
 }
 
-void FullScreenView::slotStateChanged(bool state)
+void FullScreenView::slotStateChanged(bool running)
 {
-    if(state)
+    if(running)
     {
-        m_timer->start();
+        if(false == m_timer->isActive())
+        {
+            m_timer->start();
+        }
     }
     else
     {
@@ -110,6 +114,8 @@ void FullScreenView::slotStateChanged(bool state)
                 "}";
 
         ui->textBrowser->setStyleSheet(styleSheet);
+
+        ui->textBrowser->clear();
     }
 }
 
@@ -138,6 +144,7 @@ bool FullScreenView::eventFilter(QObject* target, QEvent* event)
             });
             QObject::connect(tagAction, &QAction::triggered, this, [&]()
             {
+                QString qstr = QString("<font color=\"red\">%1</font>").arg(m_splitSymbol);
                 ui->textBrowser->append(m_splitSymbol);
             });
             QObject::connect(exitAction, &QAction::triggered, this, [&]()

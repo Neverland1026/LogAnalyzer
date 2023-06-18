@@ -37,7 +37,7 @@ protected:
     void refreshParseResult();
 
     // 设置部分按钮状态
-    void setState(bool enabled);
+    void setUIEnabled(bool enabled);
 
     // 日志
     void LOG(const QString& log);
@@ -98,9 +98,6 @@ private:
 
     // 分割符
     const QString m_splitSymbol;
-
-    // 虚拟文件路径
-    const QString m_virtualFilePath;
 
 };
 #endif // MAINVIEW_H

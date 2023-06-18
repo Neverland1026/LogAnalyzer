@@ -21,7 +21,7 @@ public:
     void slotParsedContent(const bool isIncrementalParse, const QString& full, const QString& part);
 
     // 处理是否正在解析
-    void slotStateChanged(bool state);
+    void slotStateChanged(bool running);
 
     // 设置分隔符
     inline void setSplitSymbol(const QString& splitSymbol) { m_splitSymbol = splitSymbol; }
