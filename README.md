@@ -12,4 +12,4 @@
 
 ## Demo 展示
 
-![image]()
+![image](https://github.com/Neverland1026/LogAnalyzer/blob/main/screenshot/Demo.bmp)
