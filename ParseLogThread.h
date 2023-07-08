@@ -32,6 +32,9 @@ public:
 
 signals:
 
+    // 文件存在
+    void sigFileExist();
+
     // 打开文件失败
     void sigOpenFileFailed();
 

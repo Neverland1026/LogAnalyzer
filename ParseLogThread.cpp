@@ -44,6 +44,8 @@ void ParseLogThread::run()
         QFile file(m_filePath);
         if(file.open(QIODevice::ReadOnly))
         {
+            emit sigFileExist();
+
             uchar* fPtr = file.map(m_lastParseIndex, file.size() - m_lastParseIndex);
             if(fPtr)
             {

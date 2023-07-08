@@ -213,6 +213,10 @@ void MainView::init()
     });
 
     // 解析线程
+    QObject::connect(m_parseLogThread, &ParseLogThread::sigFileExist, this, [&]()
+    {
+        emit sigStateChanged(true);
+    });
     QObject::connect(m_parseLogThread, &ParseLogThread::sigOpenFileFailed, this, [&]()
     {
         LOG("Open file failed.");
@@ -252,6 +256,7 @@ void MainView::init()
         m_parseRunning = true;
         ui->pushButton_start->setIcon(QIcon(":/images/stop.svg"));
         setUIEnabled(!m_parseRunning);
+        /*emit sigStateChanged(true);*/
 
         LOG("Parse process begin.");
     });
