@@ -29,6 +29,9 @@ public:
     // 设置是否还在运行
     inline void setRunningState(bool state) { m_running = state; }
 
+    // 清除内容
+    void clear();
+
 protected:
 
     // 事件过滤器

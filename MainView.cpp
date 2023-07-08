@@ -123,8 +123,45 @@ void MainView::init()
         else
         {
             reset();
+
             m_targetFile = "";
-            restartWatch();
+
+            // 汇总用户输入的信息
+            [&]()
+            {
+                m_targetDirectory = ui->lineEdit_targetDirectory->text();
+                m_targetRegExp = ui->lineEdit_targetRegExp->text();
+                m_targetKeywords.clear();
+                QStringList qstrList = ui->lineEdit_targetKeywords->text().split(";");
+                for(int i = 0; i <= qstrList.size() - 1; ++i)
+                {
+                    if(!qstrList[i].isEmpty())
+                    {
+                        m_targetKeywords.push_back(qstrList[i]);
+                    }
+                }
+            }();
+
+            // 判断输入有效性
+            if(m_targetDirectory.isEmpty() || !QDir(m_targetDirectory).exists())
+            {
+                return topWarning(QObject::tr("查询路径异常！"));
+            }
+            if(m_targetRegExp.isEmpty())
+            {
+                return topWarning(QObject::tr("查询表达式异常！"));
+            }
+            if(m_targetKeywords.isEmpty())
+            {
+                return topWarning(QObject::tr("查询关键字异常！"));
+            }
+
+            QString detectFile;
+            if(detectNewFile(detectFile, true))
+            {
+                m_targetFile = detectFile;
+                restartWatch();
+            }
         }
     });
 
@@ -182,7 +219,7 @@ void MainView::init()
         QFileInfo fi(m_targetFile);
         if(fi.size() > s_lastFileSize)
         {
-            LOG("The located log file's content changed.");
+            /*LOG("The located log file's content changed.");*/
             m_parseLogThread->increaseRequest();
         }
         else
@@ -203,13 +240,19 @@ void MainView::init()
     });
     QObject::connect(m_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, [&]()
     {
-        if(m_targetFile != "" && QFileInfo::exists(m_targetFile))
+        if(m_parseRunning)
         {
-            return;
-        }
+            QString detectFile;
+            if(detectNewFile(detectFile))
+            {
+                m_targetFile = detectFile;
 
-        LOG("The directory changed.");
-        restartWatch();
+                m_allParsedContent.resize(0);
+                ui->textBrowser_parseResult->clear();
+
+                restartWatch();
+            }
+        }
     });
 
     // 解析线程
@@ -314,8 +357,63 @@ void MainView::reset()
     m_targetKeywords.clear();
     m_allParsedContent.resize(0);
     ui->textBrowser_parseResult->clear();
-    /*ui->textBrowser_parseHistory->clear();*/
-    /*ui->textBrowser_debug->clear();*/
+}
+
+bool MainView::detectNewFile(QString& detectFile, bool allowVirtualFile /*= false*/)
+{
+    // 先直接判断文件是否存在
+    const QString file = m_targetDirectory + "/" + m_targetRegExp;
+    QFileInfo fi(file);
+    if(fi.isFile() && fi.exists())
+    {
+        if(file != m_targetFile)
+        {
+            detectFile = file;
+            return true;
+        }
+    }
+    else if(ui->checkBox_regular->isChecked())
+    {
+        // 说明 m_targetRegExp 此时代表的是文件前缀，那么需要查找包含该前缀的最近更新的文件
+        const QStringList allFiles = QDir(m_targetDirectory).entryList(QStringList({ "*.LOG", "*.log" }),
+                                                                       QDir::Files | QDir::Readable,
+                                                                       QDir::Name);
+
+        // 按创建时间排序
+        QMap<QDateTime, QString> birthTimeMap;
+        for(const auto& file : allFiles)
+        {
+            QFileInfo fi(file);
+            if(fi.baseName().contains(m_targetRegExp))
+            {
+                birthTimeMap.insert(QFileInfo(file).birthTime(), file);
+            }
+        }
+        /*LOG(QString::number(birthTimeMap.size()) + " related log file were found.");*/
+
+        // 拿到最后一次创建的文件
+        if(!birthTimeMap.isEmpty())
+        {
+            QMap<QDateTime, QString>::const_iterator it = birthTimeMap.constBegin();
+            QString maybeNewFile = std::next(it, birthTimeMap.size() - 1).value();
+            maybeNewFile = m_targetDirectory + "/" + maybeNewFile;
+            if(maybeNewFile != m_targetFile)
+            {
+                detectFile = maybeNewFile;
+                return true;
+            }
+        }
+        else
+        {
+            if(allowVirtualFile)
+            {
+                detectFile = "";
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void MainView::restartWatch()
@@ -323,133 +421,33 @@ void MainView::restartWatch()
     static std::mutex s_mutex;
     std::lock_guard<std::mutex> lock(s_mutex);
 
-    // 重置
-    reset();
+    // 开始解析
+    ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName());
+    ui->textBrowser_parseHistory->append(QString(""));
+    ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
 
-    // 汇总用户输入的信息
-    [&]()
-    {
-        m_targetDirectory = ui->lineEdit_targetDirectory->text();
-        m_targetRegExp = ui->lineEdit_targetRegExp->text();
-        m_targetKeywords.clear();
-        QStringList qstrList = ui->lineEdit_targetKeywords->text().split(";");
-        for(int i = 0; i <= qstrList.size() - 1; ++i)
-        {
-            if(!qstrList[i].isEmpty())
-            {
-                m_targetKeywords.push_back(qstrList[i]);
-            }
-        }
-    }();
+    m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
+    m_fileSystemWatcher->removePaths(m_fileSystemWatcher->directories());
+    m_fileSystemWatcher->addPath(m_targetDirectory);
+    m_fileSystemWatcher->addPath(m_targetFile);
 
-    // 判断输入有效性
-    if(m_targetDirectory.isEmpty() || !QDir(m_targetDirectory).exists())
+    if(m_parseLogThread->isRunning())
     {
-        return topWarning(QObject::tr("查询路径异常！"));
-    }
-    if(m_targetRegExp.isEmpty())
-    {
-        return topWarning(QObject::tr("查询表达式异常！"));
-    }
-    if(m_targetKeywords.isEmpty())
-    {
-        return topWarning(QObject::tr("查询关键字异常！"));
+        m_parseLogThread->stop();
+        m_parseLogThread->quit();
+        m_parseLogThread->wait();
     }
 
-    // 定义开始解析函数
-    auto startParse = [&](const QString& filePath)
-    {
-        // 更新新文件对象
-        m_targetFile = filePath;
+    m_fullScreenView->clear();
 
-        ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName());
-        ui->textBrowser_parseHistory->append(QString(""));
-        ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
+    m_parseLogThread->setFilePath(m_targetFile);
+    m_parseLogThread->setKeywords(m_targetKeywords);
+    m_parseLogThread->setCaseSensitive(ui->checkBox_caseSensitive->isChecked());
 
-        m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
-        m_fileSystemWatcher->removePaths(m_fileSystemWatcher->directories());
-        m_fileSystemWatcher->addPath(m_targetDirectory);
-        m_fileSystemWatcher->addPath(m_targetFile);
+    m_parseLogThread->increaseRequest();
+    m_parseLogThread->start();
 
-        if(m_parseLogThread->isRunning())
-        {
-            m_parseLogThread->stop();
-            m_parseLogThread->quit();
-            m_parseLogThread->wait();
-        }
-
-        m_parseLogThread->setFilePath(m_targetFile);
-        m_parseLogThread->setKeywords(m_targetKeywords);
-        m_parseLogThread->setCaseSensitive(ui->checkBox_caseSensitive->isChecked());
-        \
-        m_parseLogThread->increaseRequest();
-        m_parseLogThread->start();
-    };
-
-    // 查找和 m_targetRegExp 最佳匹配的文件项
-    [&]()
-    {
-        // 先直接判断文件是否存在
-        const QString file = m_targetDirectory + "/" + m_targetRegExp;
-        QFileInfo fi(file);
-        if(fi.isFile() && fi.exists())
-        {
-            if(m_targetFile != file)
-            {
-                LOG("[" + file + "] is indeed exist, and ready to parse this log file.");
-                startParse(file);
-            }
-            else
-            {
-                LOG("Same log file located and skip.");
-            }
-        }
-        else if(ui->checkBox_regular->isChecked())
-        {
-            LOG("Prepare to query the most recently created log file.");
-
-            // 说明 m_targetRegExp 此时代表的是文件前缀，那么需要查找包含该前缀的最近更新的文件
-            const QStringList allFiles = QDir(m_targetDirectory).entryList(QStringList({ "*.LOG", "*.log" }),
-                                                                           QDir::Files | QDir::Readable,
-                                                                           QDir::Name);
-
-            // 按创建时间排序
-            QMap<QDateTime, QString> birthTimeMap;
-            for(const auto& file : allFiles)
-            {
-                QFileInfo fi(file);
-                if(fi.baseName().contains(m_targetRegExp))
-                {
-                    birthTimeMap.insert(QFileInfo(file).birthTime(), file);
-                }
-            }
-            LOG(QString::number(birthTimeMap.size()) + " related log file were found.");
-
-            // 拿到最后一次创建的文件
-            if(!birthTimeMap.isEmpty())
-            {
-                QMap<QDateTime, QString>::const_iterator it = birthTimeMap.constBegin();
-                QString maybeNewFile = std::next(it, birthTimeMap.size() - 1).value();
-                maybeNewFile = m_targetDirectory + "/" + maybeNewFile;
-                if(maybeNewFile != m_targetFile)
-                {
-                    LOG("[" + maybeNewFile + "] is located, and ready to parse this log file.");
-                    startParse(maybeNewFile);
-                }
-                else
-                {
-                    LOG("Same log file located and skip.");
-                }
-            }
-            else
-            {
-                LOG("Parse virtual empty log.");
-
-                m_targetFile = "";
-                startParse(m_targetFile);
-            }
-        }
-    }();
+    QApplication::alert(this, 3000);
 }
 
 void MainView::refreshParseResult()
@@ -601,8 +599,6 @@ void MainView::closeEvent(QCloseEvent* event)
         settings.setValue("Config/TopHint", ui->pushButton_topHint->property("topHint").toBool());
         ui->pushButton_topHint->clicked(settings.value("Config/TopHint", false).toBool());
         settings.sync();
-
-        reset();
 
         if(m_parseLogThread->isRunning())
         {

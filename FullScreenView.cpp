@@ -119,6 +119,11 @@ void FullScreenView::slotStateChanged(bool running)
     }
 }
 
+void FullScreenView::clear()
+{
+    ui->textBrowser->clear();
+}
+
 bool FullScreenView::eventFilter(QObject* target, QEvent* event)
 {
     if(target == ui->textBrowser->viewport())
