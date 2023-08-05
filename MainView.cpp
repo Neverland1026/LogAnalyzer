@@ -248,8 +248,12 @@ void MainView::init()
 
                 s_lastFileSize = 0;
                 m_targetFile = "";
-                ui->textBrowser_parseResult->clear();
-                ui->label_targetFile->setText("");
+                ui->label_targetFile->setText(QObject::tr("已定位文件:   "));
+
+                if(/*ui->checkBox_clearImmediately->isChecked()*/true)
+                {
+                    ui->textBrowser_parseResult->clear();
+                }
             }
         }
 
@@ -265,7 +269,12 @@ void MainView::init()
                 m_targetFile = detectFile;
 
                 m_allParsedContent.resize(0);
-                ui->textBrowser_parseResult->clear();
+
+                // 这个必须要强制删除
+                if(/*ui->checkBox_clearImmediately->isChecked()*/true)
+                {
+                    ui->textBrowser_parseResult->clear();
+                }
 
                 restartWatch();
             }
@@ -442,7 +451,7 @@ void MainView::restartWatch()
     ui->label_targetFile->setText(QObject::tr("已定位文件:   ") + QFileInfo(m_targetFile).fileName());
     flickBackground();
     ui->textBrowser_parseHistory->append(QString(""));
-    ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
+    ui->textBrowser_parseHistory->append(QObject::tr(">>> ") + ui->label_targetFile->text());
 
     m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
     m_fileSystemWatcher->removePaths(m_fileSystemWatcher->directories());
