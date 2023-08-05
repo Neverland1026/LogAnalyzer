@@ -416,6 +416,9 @@
        <pointsize>12</pointsize>
       </font>
      </property>
+     <property name="cursor">
+      <cursorShape>ArrowCursor</cursorShape>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -427,17 +430,11 @@
        <item row="0" column="0">
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_targetFile_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
+          <widget class="QLabel" name="label_targetFile">
            <property name="minimumSize">
             <size>
-             <width>120</width>
-             <height>0</height>
+             <width>0</width>
+             <height>40</height>
             </size>
            </property>
            <property name="font">
@@ -457,25 +454,6 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="label_targetFile">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    background: &quot;#FFFAF0&quot;;
-    color: &quot;#000000&quot;;
-}</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item row="1" column="0">
@@ -484,6 +462,9 @@
           <font>
            <pointsize>12</pointsize>
           </font>
+         </property>
+         <property name="cursor" stdset="0">
+          <cursorShape>IBeamCursor</cursorShape>
          </property>
         </widget>
        </item>
@@ -559,6 +540,9 @@
            <pointsize>12</pointsize>
           </font>
          </property>
+         <property name="cursor" stdset="0">
+          <cursorShape>IBeamCursor</cursorShape>
+         </property>
         </widget>
        </item>
       </layout>
@@ -569,7 +553,11 @@
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
        <item row="0" column="0">
-        <widget class="QTextBrowser" name="textBrowser_debug"/>
+        <widget class="QTextBrowser" name="textBrowser_debug">
+         <property name="cursor" stdset="0">
+          <cursorShape>IBeamCursor</cursorShape>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

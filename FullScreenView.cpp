@@ -66,7 +66,7 @@ FullScreenView::FullScreenView(QWidget *parent)
     });
     m_timer->setInterval(50);
 
-    QTimer::singleShot(0, this, [&]() {
+    QTimer::singleShot(100, this, [&]() {
         ::SetWindowPos((HWND)(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
     });
 }

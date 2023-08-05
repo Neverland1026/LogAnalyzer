@@ -19,7 +19,7 @@
 MainView::MainView(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::MainView)
-    , m_targetDirectory("")
+    , m_targetDirectory(QDir::tempPath())
     , m_targetRegExp("")
     , m_targetFile("")
     , m_targetKeywords({})
@@ -38,7 +38,9 @@ MainView::MainView(QWidget *parent)
     m_fullScreenView->hide();
     m_fullScreenView->setSplitSymbol(m_splitSymbol);
 
-    ui->textBrowser_parseResult->viewport()->installEventFilter(this);
+    QTimer::singleShot(1000, this, [&]() {
+        ui->textBrowser_parseResult->viewport()->installEventFilter(this);
+    });
 
     LOG("Initial finished.");
 }
@@ -86,9 +88,14 @@ void MainView::init()
     });
     QObject::connect(ui->pushButton_targetDirectory, &QPushButton::clicked, this, [&]()
     {
-        ui->lineEdit_targetDirectory->setText(QFileDialog::getExistingDirectory(this,
-                                                                                QObject::tr("选择目标文件夹"),
-                                                                                QDir::tempPath()));
+        QString directory = QFileDialog::getExistingDirectory(this,
+                                                              QObject::tr("选择目标文件夹"),
+                                                              m_targetDirectory);
+        if(false == directory.isEmpty())
+        {
+            m_targetDirectory = directory;
+            ui->lineEdit_targetDirectory->setText(m_targetDirectory);
+        }
     });
 
     // 目标文件名或前缀
@@ -98,10 +105,16 @@ void MainView::init()
     });
     QObject::connect(ui->pushButton_targetRegExp, &QPushButton::clicked, this, [&]()
     {
-        ui->lineEdit_targetRegExp->setText(QFileInfo(QFileDialog::getOpenFileName(this,
-                                                                                  QObject::tr("选择目标文件"),
-                                                                                  m_targetDirectory,
-                                                                                  "Log File(*.LOG *.log)")).fileName());
+        QString file = QFileDialog::getOpenFileName(this,
+                                                    QObject::tr("选择目标文件"),
+                                                    m_targetDirectory,
+                                                    "Log files(*.LOG *.log);;All files(*.*)");
+        if(QFileInfo::exists(file))
+        {
+            m_targetDirectory = QFileInfo(file).filePath();
+            ui->lineEdit_targetDirectory->setText(m_targetDirectory);
+            ui->lineEdit_targetRegExp->setText(QFileInfo(file).fileName());
+        }
     });
 
     // 搜索关键字
@@ -200,13 +213,17 @@ void MainView::init()
     {
         refreshParseResult();
     });
+    QObject::connect(ui->checkBox_clearImmediately, &QCheckBox::clicked, this, [&]()
+    {
+        // Nothing todo...
+    });
 
-    //
+    // QTextBrowser
     QObject::connect(ui->textBrowser_parseResult, &QTextBrowser::cursorPositionChanged, this, [&]()
     {
-        QTextCursor cursor =  ui->textBrowser_parseResult->textCursor();
-        cursor.movePosition(QTextCursor::End);
-        ui->textBrowser_parseResult->setTextCursor(cursor);
+        //QTextCursor cursor =  ui->textBrowser_parseResult->textCursor();
+        //cursor.movePosition(QTextCursor::End);
+        //ui->textBrowser_parseResult->setTextCursor(cursor);
     });
 
     // 文件监视器
@@ -285,7 +302,7 @@ void MainView::init()
     {
         if(!m_targetFile.isEmpty())
         {
-            ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName() + "（ " + QObject::tr("已检索 %1").arg(queryLineCount) + " 行)");
+            ui->label_targetFile->setText(QObject::tr("已定位文件:   ") + QFileInfo(m_targetFile).fileName() + "（ " + QObject::tr("已检索 %1").arg(queryLineCount) + " 行)");
         }
         refreshParseResult();
     });
@@ -422,7 +439,8 @@ void MainView::restartWatch()
     std::lock_guard<std::mutex> lock(s_mutex);
 
     // 开始解析
-    ui->label_targetFile->setText(QFileInfo(m_targetFile).fileName());
+    ui->label_targetFile->setText(QObject::tr("已定位文件:   ") + QFileInfo(m_targetFile).fileName());
+    flickBackground();
     ui->textBrowser_parseHistory->append(QString(""));
     ui->textBrowser_parseHistory->append(QObject::tr(">>> 已定位文件: ") + ui->label_targetFile->text());
 
@@ -527,6 +545,60 @@ bool MainView::topQuestion(const QString& info)
     return (messageBox.exec() == QMessageBox::Yes);
 }
 
+void MainView::flickBackground()
+{
+    static QTimer s_timer = QTimer();
+
+    if(s_timer.isActive())
+    {
+        return;
+    }
+
+    QObject::connect(&s_timer, &QTimer::timeout, this, [&]()
+    {
+        static const int unit_value = 10;
+        static int deltaValue = unit_value;
+        static int value = unit_value * 2;
+        static int count = 2 * 3;
+
+        bool leave = false;
+
+        if(value >= 250 - unit_value || value <= unit_value)
+        {
+            deltaValue = deltaValue * (-1);
+            --count;
+
+            if(count == 0)
+            {
+                count = 2 * 3;
+                leave = true;
+            }
+        }
+        value += deltaValue;
+
+        QString styleSheet = QString(
+                                 "QLabel"                                  \
+                                 "{"                                       \
+                                 "    background: \"#FFFAF0\";"            \
+                                 "    color: \"#000000\";"                 \
+                                 "    border:3px solid;"                   \
+                                 "    border-color: rgba(255, 0, 0, %1);"  \
+                                 "}"
+                                 ).arg(QString::number(leave ? 0 : value));
+
+        ui->label_targetFile->setStyleSheet(styleSheet);
+
+        if(leave)
+        {
+            s_timer.stop();
+            QObject::disconnect(&s_timer, 0, 0, 0);
+        }
+    });
+
+    s_timer.setInterval(25);
+    s_timer.start();
+}
+
 void MainView::dragEnterEvent(QDragEnterEvent* event)
 {
     if (event->mimeData()->hasUrls())
@@ -541,6 +613,11 @@ void MainView::dragEnterEvent(QDragEnterEvent* event)
 
 void MainView::dropEvent(QDropEvent* event)
 {
+    if(m_parseRunning)
+    {
+        return;
+    }
+
     // 获取MIME数据
     const QMimeData *mimeData = event->mimeData();
 
@@ -555,8 +632,27 @@ void MainView::dropEvent(QDropEvent* event)
         QFileInfo fi(fileName);
         if(fi.exists())
         {
-            ui->lineEdit_targetDirectory->setText(fi.path());
-            ui->lineEdit_targetRegExp->setText(fi.fileName());
+            QLineEdit* child = static_cast<QLineEdit*>(childAt(event->position().toPoint()));
+            if(Q_NULLPTR != child)
+            {
+                if(child == ui->lineEdit_targetDirectory)
+                {
+                    if(fi.isDir())
+                    {
+                        m_targetDirectory = fileName;
+                        ui->lineEdit_targetDirectory->setText(m_targetDirectory);
+                    }
+                }
+                else if(child == ui->lineEdit_targetRegExp)
+                {
+                    if(fi.isFile())
+                    {
+                        m_targetDirectory = fi.absolutePath();
+                        ui->lineEdit_targetDirectory->setText(m_targetDirectory);
+                        ui->lineEdit_targetRegExp->setText(fi.fileName());
+                    }
+                }
+            }
         }
     }
 }
@@ -567,9 +663,11 @@ void MainView::keyPressEvent(QKeyEvent* event)
     {
     case Qt::Key_Enter:
     case Qt::Key_Return:
+        m_allParsedContent.emplace_back(m_splitSymbol, m_splitSymbol);
         ui->textBrowser_parseResult->append(m_splitSymbol);
         break;
     case Qt::Key_Delete:
+        m_allParsedContent.resize(0);
         ui->textBrowser_parseResult->clear();
         break;
     case Qt::Key_Escape:
@@ -642,6 +740,7 @@ bool MainView::eventFilter(QObject* target, QEvent* event)
             });
             QObject::connect(tagAction, &QAction::triggered, this, [&]()
             {
+                m_allParsedContent.emplace_back(m_splitSymbol, m_splitSymbol);
                 ui->textBrowser_parseResult->append(m_splitSymbol);
             });
 

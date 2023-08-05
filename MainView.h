@@ -51,6 +51,9 @@ protected:
     // 询问提示
     bool topQuestion(const QString& info);
 
+    // 背景闪烁
+    void flickBackground();
+
     // 文件拖拽
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dropEvent(QDropEvent* event) override;
