@@ -20,7 +20,7 @@ MainView::MainView(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::MainView)
     , m_targetDirectory(QDir::tempPath())
-    , m_targetRegExp("")
+    , m_targetFileFuzzy("")
     , m_targetFile("")
     , m_targetKeywords({})
     , m_fileSystemWatcher(new QFileSystemWatcher(this))
@@ -71,23 +71,17 @@ void MainView::init()
         {
             ui->pushButton_topHint->animateClick();
         }
-        ui->lineEdit_targetDirectory->setText(settings.value("Config/DirectoryPath", QDir::tempPath()).toString());
-        ui->lineEdit_targetRegExp->setText(settings.value("Config/RegExp", "").toString());
+        ui->lineEdit_targetDirectory->setText(settings.value("Config/Directory", QDir::tempPath()).toString());
+        ui->lineEdit_targetFile->setText(settings.value("Config/FileFuzzy", "").toString());
         ui->lineEdit_targetKeywords->setText(settings.value("Config/Keywords", "").toString());
         ui->checkBox_caseSensitive->setChecked(settings.value("Config/CaseSensitive", true).toBool());
-        ui->checkBox_regular->setChecked(settings.value("Config/Regular", true).toBool());
         ui->checkBox_showLineNumber->setChecked(settings.value("Config/ShowLineNumber", false).toBool());
         ui->checkBox_showFullContent->setChecked(settings.value("Config/ShowFullContent", false).toBool());
         ui->checkBox_clearImmediately->setChecked(settings.value("Config/ClearImmediately", false).toBool());
     }();
 
-    // 目标搜索路径
-    QObject::connect(ui->lineEdit_targetDirectory, &QLineEdit::textEdited, this, [&]()
-    {
-        // Nothing todo...
-    });
-    QObject::connect(ui->pushButton_targetDirectory, &QPushButton::clicked, this, [&]()
-    {
+    // 文件夹
+    QObject::connect(ui->pushButton_targetDirectory, &QPushButton::clicked, this, [&]() {
         QString directory = QFileDialog::getExistingDirectory(this,
                                                               QObject::tr("选择目标文件夹"),
                                                               m_targetDirectory);
@@ -96,31 +90,6 @@ void MainView::init()
             m_targetDirectory = directory;
             ui->lineEdit_targetDirectory->setText(m_targetDirectory);
         }
-    });
-
-    // 目标文件名或前缀
-    QObject::connect(ui->lineEdit_targetRegExp, &QLineEdit::textEdited, this, [&]()
-    {
-        // Nothing todo...
-    });
-    QObject::connect(ui->pushButton_targetRegExp, &QPushButton::clicked, this, [&]()
-    {
-        QString file = QFileDialog::getOpenFileName(this,
-                                                    QObject::tr("选择目标文件"),
-                                                    m_targetDirectory,
-                                                    "Log files(*.LOG *.log);;All files(*.*)");
-        if(QFileInfo::exists(file))
-        {
-            m_targetDirectory = QFileInfo(file).filePath();
-            ui->lineEdit_targetDirectory->setText(m_targetDirectory);
-            ui->lineEdit_targetRegExp->setText(QFileInfo(file).fileName());
-        }
-    });
-
-    // 搜索关键字
-    QObject::connect(ui->lineEdit_targetKeywords, &QLineEdit::textEdited, this, [&]()
-    {
-        // Nothing todo...
     });
 
     // 开始与结束
@@ -136,14 +105,13 @@ void MainView::init()
         else
         {
             reset();
-
             m_targetFile = "";
 
             // 汇总用户输入的信息
             [&]()
             {
                 m_targetDirectory = ui->lineEdit_targetDirectory->text();
-                m_targetRegExp = ui->lineEdit_targetRegExp->text();
+                m_targetFileFuzzy = ui->lineEdit_targetFile->text();
                 m_targetKeywords.clear();
                 QStringList qstrList = ui->lineEdit_targetKeywords->text().split(";");
                 for(int i = 0; i <= qstrList.size() - 1; ++i)
@@ -160,7 +128,7 @@ void MainView::init()
             {
                 return topWarning(QObject::tr("查询路径异常！"));
             }
-            if(m_targetRegExp.isEmpty())
+            if(m_targetFileFuzzy.isEmpty())
             {
                 return topWarning(QObject::tr("查询表达式异常！"));
             }
@@ -212,18 +180,6 @@ void MainView::init()
     QObject::connect(ui->checkBox_showFullContent, &QCheckBox::clicked, this, [&]()
     {
         refreshParseResult();
-    });
-    QObject::connect(ui->checkBox_clearImmediately, &QCheckBox::clicked, this, [&]()
-    {
-        // Nothing todo...
-    });
-
-    // QTextBrowser
-    QObject::connect(ui->textBrowser_parseResult, &QTextBrowser::cursorPositionChanged, this, [&]()
-    {
-        //QTextCursor cursor =  ui->textBrowser_parseResult->textCursor();
-        //cursor.movePosition(QTextCursor::End);
-        //ui->textBrowser_parseResult->setTextCursor(cursor);
     });
 
     // 文件监视器
@@ -378,7 +334,7 @@ void MainView::reset()
     ui->lineEdit_targetDirectory->setReadOnly(true);
 
     m_targetDirectory.clear();
-    m_targetRegExp.clear();
+    m_targetFile.clear();
     /*m_targetFile.clear();*/  // 不能删除
     m_targetKeywords.clear();
     m_allParsedContent.resize(0);
@@ -387,6 +343,7 @@ void MainView::reset()
 
 bool MainView::detectNewFile(QString& detectFile, bool allowVirtualFile /*= false*/)
 {
+#if 0
     // 先直接判断文件是否存在
     const QString file = m_targetDirectory + "/" + m_targetRegExp;
     QFileInfo fi(file);
@@ -438,7 +395,7 @@ bool MainView::detectNewFile(QString& detectFile, bool allowVirtualFile /*= fals
             }
         }
     }
-
+#endif
     return false;
 }
 
@@ -528,8 +485,7 @@ void MainView::setUIEnabled(bool enabled)
 {
     ui->lineEdit_targetDirectory->setEnabled(enabled);
     ui->pushButton_targetDirectory->setEnabled(enabled);
-    ui->lineEdit_targetRegExp->setEnabled(enabled);
-    ui->pushButton_targetRegExp->setEnabled(enabled);
+    ui->lineEdit_targetFile->setEnabled(enabled);
     ui->lineEdit_targetKeywords->setEnabled(enabled);
 }
 
@@ -652,13 +608,13 @@ void MainView::dropEvent(QDropEvent* event)
                         ui->lineEdit_targetDirectory->setText(m_targetDirectory);
                     }
                 }
-                else if(child == ui->lineEdit_targetRegExp)
+                else if(child == ui->lineEdit_targetFile)
                 {
                     if(fi.isFile())
                     {
                         m_targetDirectory = fi.absolutePath();
                         ui->lineEdit_targetDirectory->setText(m_targetDirectory);
-                        ui->lineEdit_targetRegExp->setText(fi.fileName());
+                        ui->lineEdit_targetFile->setText(fi.fileName());
                     }
                 }
             }
@@ -695,11 +651,10 @@ void MainView::closeEvent(QCloseEvent* event)
         settings.setValue("Config/WindowHeight", this->height());
         settings.setValue("Config/WindowX", this->pos().x());
         settings.setValue("Config/WindowY", this->pos().y());
-        settings.setValue("Config/DirectoryPath", ui->lineEdit_targetDirectory->text());
-        settings.setValue("Config/RegExp", ui->lineEdit_targetRegExp->text());
+        settings.setValue("Config/Directory", ui->lineEdit_targetDirectory->text());
+        settings.setValue("Config/FileFuzzy", ui->lineEdit_targetFile->text());
         settings.setValue("Config/Keywords", ui->lineEdit_targetKeywords->text());
         settings.setValue("Config/CaseSensitive", ui->checkBox_caseSensitive->isChecked());
-        settings.setValue("Config/Regular", ui->checkBox_regular->isChecked());
         settings.setValue("Config/ShowLineNumber", ui->checkBox_showLineNumber->isChecked());
         settings.setValue("Config/ShowFullContent", ui->checkBox_showFullContent->isChecked());
         settings.setValue("Config/ClearImmediately", ui->checkBox_clearImmediately->isChecked());

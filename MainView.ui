@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>901</width>
-    <height>770</height>
+    <height>985</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>日志监视</string>
+   <string>日志监视器</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_8">
    <item row="0" column="0">
@@ -35,6 +35,133 @@
        <string>查询设置</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_7">
+       <item row="0" column="1" rowspan="2">
+        <widget class="Line" name="line_2">
+         <property name="minimumSize">
+          <size>
+           <width>30</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QPushButton" name="pushButton_alpha">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="res.qrc">
+           <normaloff>:/images/alpha.svg</normaloff>:/images/alpha.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QPushButton" name="pushButton_topHint">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="res.qrc">
+           <normaloff>:/images/topHint_normal.svg</normaloff>:/images/topHint_normal.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="pushButton_start">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="res.qrc">
+           <normaloff>:/images/start.svg</normaloff>:/images/start.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="0" rowspan="2">
         <widget class="QFrame" name="frame_2">
          <property name="frameShape">
@@ -52,7 +179,7 @@
              </font>
             </property>
             <property name="text">
-             <string>待查询路径</string>
+             <string>文件夹</string>
             </property>
            </widget>
           </item>
@@ -117,12 +244,12 @@
              </font>
             </property>
             <property name="text">
-             <string>查询表达式</string>
+             <string>文件名</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="lineEdit_targetRegExp">
+          <item row="1" column="1" colspan="3">
+           <widget class="QLineEdit" name="lineEdit_targetFile">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -145,45 +272,6 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QCheckBox" name="checkBox_regular">
-            <property name="text">
-             <string>关键字查询</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QPushButton" name="pushButton_targetRegExp">
-            <property name="minimumSize">
-             <size>
-              <width>50</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="res.qrc">
-              <normaloff>:/images/query.svg</normaloff>:/images/query.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>25</width>
-              <height>25</height>
-             </size>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="0">
            <widget class="QLabel" name="label_3">
             <property name="font">
@@ -192,7 +280,7 @@
              </font>
             </property>
             <property name="text">
-             <string>查询关键字</string>
+             <string>关键字</string>
             </property>
            </widget>
           </item>
@@ -217,7 +305,7 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="2">
+          <item row="2" column="2" colspan="2">
            <widget class="QCheckBox" name="checkBox_caseSensitive">
             <property name="text">
              <string>区分大小写</string>
@@ -225,95 +313,6 @@
            </widget>
           </item>
          </layout>
-        </widget>
-       </item>
-       <item row="0" column="1" rowspan="2">
-        <widget class="Line" name="line_2">
-         <property name="minimumSize">
-          <size>
-           <width>30</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QPushButton" name="pushButton_start">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="res.qrc">
-           <normaloff>:/images/start.svg</normaloff>:/images/start.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>40</width>
-           <height>40</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QPushButton" name="pushButton_topHint">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="res.qrc">
-           <normaloff>:/images/topHint_normal.svg</normaloff>:/images/topHint_normal.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>40</width>
-           <height>40</height>
-          </size>
-         </property>
         </widget>
        </item>
        <item row="1" column="2">
@@ -345,44 +344,6 @@
          <property name="icon">
           <iconset resource="res.qrc">
            <normaloff>:/images/zoomin.svg</normaloff>:/images/zoomin.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>40</width>
-           <height>40</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="3">
-        <widget class="QPushButton" name="pushButton_alpha">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="res.qrc">
-           <normaloff>:/images/alpha.svg</normaloff>:/images/alpha.svg</iconset>
          </property>
          <property name="iconSize">
           <size>

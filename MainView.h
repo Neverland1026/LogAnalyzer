@@ -82,7 +82,7 @@ private:
     QString m_targetDirectory;
 
     // 监视的文件或文件前缀
-    QString m_targetRegExp;
+    QString m_targetFileFuzzy;
 
     // 真正监视的文件
     QString m_targetFile;
