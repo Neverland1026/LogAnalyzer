@@ -137,11 +137,14 @@ void MainView::init()
                 return topWarning(QObject::tr("查询关键字异常！"));
             }
 
-            QString detectFile;
-            if(detectNewFile(detectFile, true))
+            QString newFile;
+            if(detectNewFile(newFile))
             {
-                m_targetFile = detectFile;
                 restartWatch();
+            }
+            else
+            {
+                return topWarning(QObject::tr("未查询到有效对应文件！"));
             }
         }
     });
@@ -217,24 +220,19 @@ void MainView::init()
     });
     QObject::connect(m_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, [&]()
     {
-        if(m_parseRunning)
-        {
-            QString detectFile;
-            if(detectNewFile(detectFile))
-            {
-                m_targetFile = detectFile;
+        //if(m_parseRunning)
+        //{
+        //    QString newFile;
+        //    if(detectNewFile(newFile))
+        //    {
+        //        m_allParsedContent.resize(0);
 
-                m_allParsedContent.resize(0);
+        //        // 这个必须要强制删除
+        //        ui->textBrowser_parseResult->clear();
 
-                // 这个必须要强制删除
-                if(/*ui->checkBox_clearImmediately->isChecked()*/true)
-                {
-                    ui->textBrowser_parseResult->clear();
-                }
-
-                restartWatch();
-            }
-        }
+        //        restartWatch();
+        //    }
+        //}
     });
 
     // 解析线程
@@ -341,61 +339,51 @@ void MainView::reset()
     ui->textBrowser_parseResult->clear();
 }
 
-bool MainView::detectNewFile(QString& detectFile, bool allowVirtualFile /*= false*/)
+bool MainView::detectNewFile(QString& newFile)
 {
-#if 0
+    // 置空
+    newFile = "";
+
     // 先直接判断文件是否存在
-    const QString file = m_targetDirectory + "/" + m_targetRegExp;
+    const QString file = m_targetDirectory + "/" + m_targetFileFuzzy;
     QFileInfo fi(file);
     if(fi.isFile() && fi.exists())
     {
-        if(file != m_targetFile)
-        {
-            detectFile = file;
-            return true;
-        }
+        newFile = file;
+        return (newFile != m_targetFile);
     }
-    else if(ui->checkBox_regular->isChecked())
+
+    // 查找包含该前缀的最近更新的文件
+    const QStringList allFiles = QDir(m_targetDirectory).entryList(QStringList({ "*.LOG", "*.log" }),
+                                                                   QDir::Files | QDir::Readable,
+                                                                   QDir::Name);
+
+    // 按创建时间排序
+    QMap<QDateTime, QString> birthTimeMap;
+    for(const auto& file : allFiles)
     {
-        // 说明 m_targetRegExp 此时代表的是文件前缀，那么需要查找包含该前缀的最近更新的文件
-        const QStringList allFiles = QDir(m_targetDirectory).entryList(QStringList({ "*.LOG", "*.log" }),
-                                                                       QDir::Files | QDir::Readable,
-                                                                       QDir::Name);
-
-        // 按创建时间排序
-        QMap<QDateTime, QString> birthTimeMap;
-        for(const auto& file : allFiles)
+        QFileInfo fi(file);
+        if(fi.baseName().contains(m_targetFileFuzzy))
         {
-            QFileInfo fi(file);
-            if(fi.baseName().contains(m_targetRegExp))
-            {
-                birthTimeMap.insert(QFileInfo(file).birthTime(), file);
-            }
-        }
-        /*LOG(QString::number(birthTimeMap.size()) + " related log file were found.");*/
-
-        // 拿到最后一次创建的文件
-        if(!birthTimeMap.isEmpty())
-        {
-            QMap<QDateTime, QString>::const_iterator it = birthTimeMap.constBegin();
-            QString maybeNewFile = std::next(it, birthTimeMap.size() - 1).value();
-            maybeNewFile = m_targetDirectory + "/" + maybeNewFile;
-            if(maybeNewFile != m_targetFile)
-            {
-                detectFile = maybeNewFile;
-                return true;
-            }
-        }
-        else
-        {
-            if(allowVirtualFile)
-            {
-                detectFile = "";
-                return true;
-            }
+            birthTimeMap.insert(QFileInfo(file).birthTime(), file);
         }
     }
-#endif
+
+    // 判空
+    if(birthTimeMap.isEmpty())
+    {
+        return false;
+    }
+
+    // 拿到最后一次创建的文件
+    if(!birthTimeMap.isEmpty())
+    {
+        QMap<QDateTime, QString>::const_iterator it = birthTimeMap.constBegin();
+        newFile = std::next(it, birthTimeMap.size() - 1).value();
+        newFile = m_targetDirectory + "/" + newFile;
+        return (newFile != m_targetFile);
+    }
+
     return false;
 }
 
@@ -410,10 +398,13 @@ void MainView::restartWatch()
     ui->textBrowser_parseHistory->append(QString(""));
     ui->textBrowser_parseHistory->append(QObject::tr(">>> ") + ui->label_targetFile->text());
 
-    m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
+    // 跟踪文件
+    if(m_fileSystemWatcher->files().size() > 0)
+    {
+        m_fileSystemWatcher->removePaths(m_fileSystemWatcher->files());
+    }
     m_fileSystemWatcher->removePaths(m_fileSystemWatcher->directories());
     m_fileSystemWatcher->addPath(m_targetDirectory);
-    m_fileSystemWatcher->addPath(m_targetFile);
 
     if(m_parseLogThread->isRunning())
     {
@@ -422,15 +413,17 @@ void MainView::restartWatch()
         m_parseLogThread->wait();
     }
 
+    // 清空上一次的内容
     m_fullScreenView->clear();
 
+    // 开始新的查询线程
     m_parseLogThread->setFilePath(m_targetFile);
     m_parseLogThread->setKeywords(m_targetKeywords);
     m_parseLogThread->setCaseSensitive(ui->checkBox_caseSensitive->isChecked());
-
     m_parseLogThread->increaseRequest();
     m_parseLogThread->start();
 
+    // 状态栏指示
     QApplication::alert(this, 3000);
 }
 

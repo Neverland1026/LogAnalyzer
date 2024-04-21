@@ -31,7 +31,7 @@ protected:
     void reset();
 
     // 是否有新文件
-    bool detectNewFile(QString& detectFile, bool allowVirtualFile = false);
+    bool detectNewFile(QString& newFile);
 
     // 重新跟踪文件
     void restartWatch();
